@@ -25,9 +25,9 @@ export function SelectionObservabilityPane({ node, edge, expanded = false }: Sel
   const details = node?.data.details ?? edge?.data;
 
   return (
-    <section className="surface-card rounded-xl p-3">
+    <section className="surface-card min-w-0 overflow-hidden rounded-xl p-3">
       <div className="mb-2 flex items-center justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h3 className="text-sm font-semibold text-primary">{activeTitle}</h3>
           <p className="mt-1 text-xs text-dimmed">{activeDescription}</p>
         </div>

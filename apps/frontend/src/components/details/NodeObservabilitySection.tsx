@@ -158,11 +158,11 @@ function ResizablePaneLayout({ count, ratios, onRatiosChange, children }: Resiza
   };
 
   return (
-    <div ref={containerRef} className="flex flex-col gap-3 md:flex-row md:gap-0">
+    <div ref={containerRef} className="min-w-0 flex flex-col gap-3 md:flex-row md:gap-0">
       {panels.map((panel, index) => (
         <Fragment key={`pane-group-${index}`}>
           <div
-            className="min-w-0 md:min-h-[320px]"
+            className="min-w-0 overflow-hidden md:min-h-[320px]"
             style={{ flexBasis: `${normalizedRatios[index] * 100}%`, flexGrow: 0, flexShrink: 0 }}
           >
             {panel}
@@ -380,9 +380,9 @@ export function NodeObservabilitySection({
     const selectedSeries = metrics.find((series) => series.id === selectedId) ?? metrics[index] ?? metrics[0];
 
     return (
-      <article key={`graph-panel-${index}`} className="surface-subtle flex h-full flex-col rounded-xl p-3">
+      <article key={`graph-panel-${index}`} className="surface-subtle flex h-full min-w-0 flex-col rounded-xl p-3">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <div>
+          <div className="min-w-0">
             <p className="text-[11px] uppercase tracking-[0.18em] text-dimmed">Graph {index + 1}</p>
             <p className="mt-1 text-xs text-dimmed">Resize handles let you compact this row without losing context.</p>
           </div>
@@ -393,7 +393,7 @@ export function NodeObservabilitySection({
               next[index] = event.target.value;
               setMetricSelections(next);
             }}
-            className="input-control max-w-[180px] px-2 py-1 text-xs"
+            className="input-control w-full max-w-[180px] px-2 py-1 text-xs"
           >
             {metrics.map((series) => (
               <option key={series.id} value={series.id}>
@@ -418,9 +418,9 @@ export function NodeObservabilitySection({
   const logColumns = splitIntoColumns(visibleLogs, logPanelCount);
 
   return (
-    <section className="mt-4 space-y-3">
+    <section className="mt-4 min-w-0 space-y-3 overflow-hidden">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div>
+        <div className="min-w-0">
           <h3 className="text-sm font-semibold text-primary">{title}</h3>
           <p className="mt-1 text-xs text-dimmed">{description}</p>
         </div>
@@ -457,7 +457,7 @@ export function NodeObservabilitySection({
       </div>
 
       {activeTab === "graphs" ? (
-        <article className="surface-subtle rounded-xl p-3">
+        <article className="surface-subtle min-w-0 rounded-xl p-3">
           <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <h4 className="text-xs font-semibold text-primary">Metric Graph Workspace</h4>
@@ -495,7 +495,7 @@ export function NodeObservabilitySection({
           )}
         </article>
       ) : (
-        <article className="surface-subtle rounded-xl p-3">
+        <article className="surface-subtle min-w-0 rounded-xl p-3">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <h4 className="text-xs font-semibold text-primary">Log Workspace</h4>
@@ -548,7 +548,7 @@ export function NodeObservabilitySection({
           <div className="mt-3">
             <ResizablePaneLayout count={logPanelCount} ratios={logRatios} onRatiosChange={setLogRatios}>
               {logColumns.map((column, index) => (
-                <article key={`log-panel-${index}`} className="rounded-xl border border-white/10 bg-[#020617]/20 p-3">
+                <article key={`log-panel-${index}`} className="min-w-0 rounded-xl border border-white/10 bg-[#020617]/20 p-3">
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <div>
                       <p className="text-[11px] uppercase tracking-[0.18em] text-dimmed">Log Box {index + 1}</p>

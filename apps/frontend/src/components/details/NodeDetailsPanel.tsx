@@ -28,7 +28,7 @@ export function NodeDetailsPanel({ node, open, onClose, densityPreference }: Nod
 
   if (!node) {
     return (
-      <aside className={`surface-card w-full max-w-sm rounded-xl ${paddingClass} lg:w-80 transition-all duration-200 ease-out ${animClass}`}>
+      <aside className={`surface-card w-full min-w-0 rounded-xl ${paddingClass} transition-all duration-200 ease-out ${animClass}`}>
         <h3 className="text-sm font-semibold text-primary">Asset Inspector</h3>
         <p className="mt-1 text-xs text-dimmed">
           Select a node to inspect DNS, cert, VPN, and other operational details.
@@ -40,16 +40,16 @@ export function NodeDetailsPanel({ node, open, onClose, densityPreference }: Nod
   const details = node.data.details;
 
   return (
-    <aside className={`surface-card w-full max-w-sm rounded-xl ${paddingClass} lg:w-80 transition-all duration-200 ease-out ${animClass}`}>
+    <aside className={`surface-card w-full min-w-0 rounded-xl ${paddingClass} transition-all duration-200 ease-out ${animClass}`}>
       <div className="mb-3 flex items-start justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-primary">{node.data.name}</h3>
-          <p className="text-xs text-dimmed">{node.identity.key}</p>
+        <div className="min-w-0">
+          <h3 className="truncate text-lg font-semibold text-primary">{node.data.name}</h3>
+          <p className="truncate text-xs text-dimmed">{node.identity.key}</p>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="button-subtle px-2 py-1 text-xs"
+          className="button-subtle shrink-0 px-2 py-1 text-xs"
         >
           Close
         </button>
@@ -58,15 +58,15 @@ export function NodeDetailsPanel({ node, open, onClose, densityPreference }: Nod
       <dl className="space-y-3 text-sm">
         <div>
           <dt className="text-dimmed">IP</dt>
-          <dd className="font-medium text-primary">{node.data.ip}</dd>
+          <dd className="break-words font-medium text-primary">{node.data.ip}</dd>
         </div>
         <div>
           <dt className="text-dimmed">Local DNS</dt>
-          <dd className="font-medium text-primary">{details?.localDns ?? "unknown"}</dd>
+          <dd className="break-words font-medium text-primary">{details?.localDns ?? "unknown"}</dd>
         </div>
         <div>
           <dt className="text-dimmed">Public DNS</dt>
-          <dd className="font-medium text-primary">{details?.publicDns ?? "unknown"}</dd>
+          <dd className="break-words font-medium text-primary">{details?.publicDns ?? "unknown"}</dd>
         </div>
         <div>
           <dt className="text-dimmed">Cert Status</dt>

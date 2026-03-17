@@ -12,14 +12,14 @@ function AssetNodeCard({ data, forcedType }: NodeProps<NetDashNodeData> & { forc
   const type = forcedType;
 
   return (
-    <article className="asset-node-card min-w-52 rounded-xl p-2.5">
+    <article className="asset-node-card min-w-52 max-w-[15rem] rounded-xl p-2.5">
       <Handle type="target" position={Position.Left} className="!bg-slate-400" />
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h4 className="text-sm font-semibold text-primary">{data.name}</h4>
-          <p className="text-[11px] text-dimmed">{data.ip}</p>
+        <div className="min-w-0">
+          <h4 className="truncate text-sm font-semibold text-primary">{data.name}</h4>
+          <p className="truncate text-[11px] text-dimmed">{data.ip}</p>
         </div>
-        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${badgeByType[type]}`}>
+        <span className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${badgeByType[type]}`}>
           {type}
         </span>
       </div>

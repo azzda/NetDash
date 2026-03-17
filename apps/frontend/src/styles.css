@@ -83,6 +83,27 @@ body {
   backdrop-filter: blur(18px);
 }
 
+.surface-shell,
+.surface-card,
+.surface-canvas,
+.surface-subtle,
+.asset-node-card,
+.drawer-surface,
+.graph-toolbar {
+  position: relative;
+  isolation: isolate;
+  background-clip: padding-box;
+}
+
+.surface-shell,
+.surface-card,
+.surface-canvas,
+.surface-subtle,
+.asset-node-card,
+.drawer-surface {
+  overflow: hidden;
+}
+
 .surface-subtle {
   background: var(--panel-subtle-bg);
   border: 1px solid var(--panel-subtle-border);
@@ -171,63 +192,28 @@ body {
   backdrop-filter: blur(20px);
 }
 
-.netdash-title-badge {
-  position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 0.9rem;
-  padding: 0.4rem 0.7rem;
-  overflow: hidden;
-}
-
-.netdash-title-badge::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  border: 1px solid transparent;
-  opacity: 0.9;
-  pointer-events: none;
-}
-
-.netdash-title-badge[data-health="healthy"]::before {
-  border-color: rgba(74, 222, 128, 0.65);
-  box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.08), 0 0 20px rgba(74, 222, 128, 0.16);
-  animation: netdash-throb 2.1s ease-in-out infinite;
-}
-
-.netdash-title-badge[data-health="warning"]::before {
-  border-color: rgba(251, 191, 36, 0.7);
-  box-shadow: 0 0 18px rgba(251, 191, 36, 0.16);
-  animation: netdash-throb 1.2s ease-in-out infinite;
-}
-
-.netdash-title-badge[data-health="issue"]::before {
-  border-color: rgba(251, 113, 133, 0.82);
-  box-shadow: 0 0 22px rgba(251, 113, 133, 0.18);
-  animation: netdash-alert 1s ease-in-out infinite;
-}
-
 .header-overview-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.45rem 0.75rem;
+  gap: 0.45rem;
+  padding: 0.35rem 0.6rem;
   border-radius: 999px;
   border: 1px solid var(--panel-border);
   background: rgba(255, 255, 255, 0.04);
   color: var(--text-primary);
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .header-overview-pill__label {
-  font-size: 0.7rem;
-  letter-spacing: 0.14em;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
 
 .header-overview-pill__value {
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   font-weight: 700;
 }
 
@@ -370,34 +356,6 @@ body {
 
 .log-stream-row__message span {
   white-space: pre-wrap;
-}
-
-@keyframes netdash-throb {
-  0%,
-  100% {
-    opacity: 0.78;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.01);
-  }
-}
-
-@keyframes netdash-alert {
-  0%,
-  100% {
-    opacity: 0.9;
-    transform: scale(1);
-  }
-  40% {
-    opacity: 1;
-    transform: scale(1.015);
-  }
-  70% {
-    opacity: 0.7;
-    transform: scale(0.995);
-  }
 }
 
 @keyframes connector-pulse {
