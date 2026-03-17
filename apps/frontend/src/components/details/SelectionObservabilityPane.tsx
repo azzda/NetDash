@@ -4,9 +4,10 @@ import { NodeObservabilitySection } from "./NodeObservabilitySection";
 interface SelectionObservabilityPaneProps {
   node?: NetDashNode;
   edge?: NetDashEdge;
+  expanded?: boolean;
 }
 
-export function SelectionObservabilityPane({ node, edge }: SelectionObservabilityPaneProps) {
+export function SelectionObservabilityPane({ node, edge, expanded = false }: SelectionObservabilityPaneProps) {
   const activeTitle = node
     ? `${node.data.name} Observability`
     : edge?.data?.displayName
@@ -42,6 +43,7 @@ export function SelectionObservabilityPane({ node, edge }: SelectionObservabilit
           details={details}
           title={node ? "Live Node Context" : "Live Connection Context"}
           description={activeDescription}
+          expanded={expanded}
         />
       ) : (
         <div className="surface-subtle rounded-xl p-4 text-sm text-dimmed">

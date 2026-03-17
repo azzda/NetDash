@@ -50,9 +50,10 @@ function severityTone(severity: NodeLogEntry["severity"]) {
 interface MiniMetricChartProps {
   series: NodeMetricSeries;
   range: TimeRange;
+  expanded?: boolean;
 }
 
-function MiniMetricChart({ series, range }: MiniMetricChartProps) {
+function MiniMetricChart({ series, range, expanded = false }: MiniMetricChartProps) {
   const [hoveredPoint, setHoveredPoint] = useState<NodeMetricPoint | null>(null);
   const filteredPoints = useMemo(() => filterSeries(series.points, range), [range, series.points]);
 
@@ -95,7 +96,7 @@ function MiniMetricChart({ series, range }: MiniMetricChartProps) {
         </span>
       </div>
 
-      <svg viewBox={`0 0 ${width} ${height}`} className="mt-3 h-24 w-full overflow-visible">
+      <svg viewBox={`0 0 ${width} ${height}`} className={`mt-3 w-full overflow-visible ${expanded ? "h-36" : "h-24"}`}>
         <path
           d={path}
           fill="none"
@@ -139,22 +140,29 @@ interface NodeObservabilitySectionProps {
   details?: ObservabilityDetails | NodeDetails;
   title?: string;
   description?: string;
+  expanded?: boolean;
 }
 
 export function NodeObservabilitySection({
   details,
   title = "Node Observability",
   description = "Quick search across recent placeholder telemetry and service events.",
+  expanded = false,
 }: NodeObservabilitySectionProps) {
   const [range, setRange] = useState<TimeRange>("1h");
   const [query, setQuery] = useState("");
+  const [severityFilter, setSeverityFilter] = useState<"all" | "error" | "warn" | "info">("all");
 
   const metrics = details?.metrics ?? [];
   const logs = details?.logs ?? [];
 
   const filteredLogs = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    const sorted = [...logs].sort((left, right) => right.ts - left.ts);
+    let sorted = [...logs].sort((left, right) => right.ts - left.ts);
+
+    if (expanded && severityFilter !== "all") {
+      sorted = sorted.filter((entry) => entry.severity === severityFilter);
+    }
 
     if (!normalizedQuery) {
       return sorted;
@@ -164,7 +172,7 @@ export function NodeObservabilitySection({
       const haystack = `${entry.source} ${entry.message} ${entry.severity}`.toLowerCase();
       return haystack.includes(normalizedQuery);
     });
-  }, [logs, query]);
+  }, [logs, query, expanded, severityFilter]);
 
   return (
     <section className="mt-4 space-y-3">
@@ -190,8 +198,8 @@ export function NodeObservabilitySection({
 
       <div className="space-y-3">
         {metrics.length > 0 ? (
-          metrics.slice(0, 2).map((series) => (
-            <MiniMetricChart key={series.id} series={series} range={range} />
+          (expanded ? metrics : metrics.slice(0, 2)).map((series) => (
+            <MiniMetricChart key={series.id} series={series} range={range} expanded={expanded} />
           ))
         ) : (
           <article className="surface-subtle rounded-xl p-3 text-xs text-dimmed">
@@ -209,9 +217,26 @@ export function NodeObservabilitySection({
             </p>
           </div>
           <span className="rounded-full bg-white/5 px-2 py-1 text-[11px] font-medium text-dimmed">
-            {filteredLogs.length} shown
+            {expanded ? `${Math.min(filteredLogs.length, 30)} / ${logs.length}` : `${filteredLogs.length} shown`}
           </span>
         </div>
+
+        {expanded && (
+          <div className="mt-3 flex gap-1 rounded-lg bg-white/5 p-0.5">
+            {(["all", "error", "warn", "info"] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setSeverityFilter(s)}
+                className={`rounded-md px-2 py-1 text-[11px] font-medium capitalize transition-colors ${
+                  severityFilter === s ? "bg-sky-600 text-white" : "text-dimmed hover:text-primary"
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
 
         <input
           value={query}
@@ -220,9 +245,9 @@ export function NodeObservabilitySection({
           placeholder="Search logs, source, or severity"
         />
 
-        <div className="mt-3 max-h-56 space-y-2 overflow-y-auto pr-1">
+        <div className={`mt-3 space-y-2 overflow-y-auto pr-1 ${expanded ? "" : "max-h-56"}`}>
           {filteredLogs.length > 0 ? (
-            filteredLogs.slice(0, 8).map((entry) => (
+            filteredLogs.slice(0, expanded ? 30 : 8).map((entry) => (
               <div key={entry.id} className="rounded-xl bg-white/5 px-3 py-2">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">

@@ -1,7 +1,6 @@
-import { startTransition, useEffect, useMemo, useState } from "react";
-import { defaultFeatureFlags, type TrafficMode } from "@netdash/shared";
+import { startTransition, useEffect, useMemo, useRef, useState } from "react";
+import { type TrafficMode } from "@netdash/shared";
 import { ConnectionDetailsPanel } from "./components/details/ConnectionDetailsPanel";
-import { NodeDetailsModal } from "./components/details/NodeDetailsModal";
 import { NodeDetailsPanel } from "./components/details/NodeDetailsPanel";
 import { SelectionObservabilityPane } from "./components/details/SelectionObservabilityPane";
 import { NetDashCanvas } from "./components/graph/NetDashCanvas";
@@ -18,7 +17,6 @@ const storageKeys = {
   theme: "netdash:theme",
   trafficMode: "netdash:traffic-mode",
   density: "netdash:density",
-  detailsSurface: "netdash:details-surface",
 };
 
 function readStoredPreference<T extends string>(key: string, fallback: T): T {
@@ -60,9 +58,8 @@ export default function App() {
     readStoredPreference(storageKeys.trafficMode, "bidirectional"),
   );
   const [systemPrefersDark, setSystemPrefersDark] = useState(true);
-  const [defaultSurface, setDefaultSurface] = useState<"panel" | "modal">(() =>
-    readStoredPreference(storageKeys.detailsSurface, defaultFeatureFlags.defaultDetailsSurface),
-  );
+  const [graphCompact, setGraphCompact] = useState(false);
+  const [wsStatus, setWsStatus] = useState<"connected" | "reconnecting" | "disconnected">("reconnecting");
   const [userProfile, setUserProfile] = useState(() =>
     readStoredJson("netdash:user-profile", {
       displayName: "Admin",
@@ -89,6 +86,10 @@ export default function App() {
         setLastError(null);
       },
       onError: (error) => setLastError(error),
+      onStatusChange: (status) => {
+        setWsStatus(status);
+        if (status === "connected") setLastError(null);
+      },
     });
 
     return () => ws.close();
@@ -122,12 +123,21 @@ export default function App() {
   }, [densityPreference]);
 
   useEffect(() => {
-    window.localStorage.setItem(storageKeys.detailsSurface, defaultSurface);
-  }, [defaultSurface]);
-
-  useEffect(() => {
     window.localStorage.setItem("netdash:user-profile", JSON.stringify(userProfile));
   }, [userProfile]);
+
+  useEffect(() => {
+    let rafId: number | undefined;
+    const handleScroll = () => {
+      if (rafId !== undefined) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => setGraphCompact(window.scrollY > 400));
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (rafId !== undefined) cancelAnimationFrame(rafId);
+    };
+  }, []);
 
   const upNodes = useMemo(
     () => nodes.filter((node) => node.data.status === "up").length,
@@ -198,17 +208,29 @@ export default function App() {
     <main className={`app-shell min-h-screen ${shellPadding}`}>
       <section className="mx-auto max-w-7xl">
         <header className="surface-shell flex items-center justify-between rounded-xl px-4 py-2">
-          <button
-            type="button"
-            onClick={() => {
-              setAppInfoOpen(true);
-              setSettingsOpen(false);
-              setUsageOpen(false);
-            }}
-            className="text-left text-base font-semibold tracking-tight text-primary"
-          >
-            NetDash
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setAppInfoOpen(true);
+                setSettingsOpen(false);
+                setUsageOpen(false);
+              }}
+              className="text-left text-base font-semibold tracking-tight text-primary"
+            >
+              NetDash
+            </button>
+            <span
+              title={`WebSocket: ${wsStatus}`}
+              className={`h-2 w-2 rounded-full transition-colors duration-300 ${
+                wsStatus === "connected"
+                  ? "bg-emerald-500"
+                  : wsStatus === "reconnecting"
+                    ? "animate-pulse bg-amber-400"
+                    : "bg-rose-500"
+              }`}
+            />
+          </div>
 
           <div className="flex items-center gap-2">
             <button
@@ -252,88 +274,90 @@ export default function App() {
           </div>
         </header>
 
-        <section className="mt-3 grid gap-3 xl:grid-cols-[1fr_320px]">
-          <NetDashCanvas
-            nodes={nodes}
-            edges={edges}
-            selectedEdgeId={selectedEdgeId}
-            trafficMode={trafficMode}
-            onTrafficModeChange={setTrafficMode}
-            densityPreference={densityPreference}
-            effectiveTheme={effectiveTheme}
-            onNodeClick={(nodeId) => setSelectedNode(nodeId)}
-            onEdgeClick={(edgeId) => setSelectedEdge(edgeId)}
-            onPaneClick={clearSelection}
-          />
+        <div className="mt-3 space-y-3">
+          <div className="flex items-stretch gap-3">
+            <div
+              className="min-w-0 flex-1 transition-[height] duration-300 ease-in-out"
+              style={{ height: graphCompact ? 140 : 560 }}
+            >
+              <NetDashCanvas
+                nodes={nodes}
+                edges={edges}
+                selectedEdgeId={selectedEdgeId}
+                trafficMode={trafficMode}
+                onTrafficModeChange={setTrafficMode}
+                densityPreference={densityPreference}
+                effectiveTheme={effectiveTheme}
+                onNodeClick={(nodeId) => setSelectedNode(nodeId)}
+                onEdgeClick={(edgeId) => setSelectedEdge(edgeId)}
+                onPaneClick={clearSelection}
+              />
+            </div>
 
-          <div className="space-y-3">
-            <section className={`surface-card rounded-xl ${cardPadding}`}>
-              <div className="flex items-baseline justify-between">
-                <h3 className="text-xs font-semibold">Overview</h3>
+            <div
+              className={`flex-none overflow-hidden transition-all duration-300 ease-in-out ${
+                graphCompact ? "max-w-0 opacity-0" : "max-w-[320px] opacity-100"
+              }`}
+            >
+              <div className="w-[320px] space-y-3">
+                <section className={`surface-card rounded-xl ${cardPadding}`}>
+                  <div className="flex items-baseline justify-between">
+                    <h3 className="text-xs font-semibold">Overview</h3>
+                  </div>
+                  <div className="mt-1.5 grid grid-cols-3 gap-2 text-center text-xs">
+                    <div>
+                      <p className="text-lg font-semibold">{nodes.length}</p>
+                      <p className="text-dimmed">Nodes</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-semibold text-emerald-500">{upNodes}</p>
+                      <p className="text-dimmed">Up</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-semibold">{edges.length}</p>
+                      <p className="text-dimmed">Edges</p>
+                    </div>
+                  </div>
+                </section>
+                {selectedEdge ? (
+                  <ConnectionDetailsPanel
+                    open
+                    edge={selectedEdge}
+                    onClose={clearSelection}
+                    densityPreference={densityPreference}
+                  />
+                ) : (
+                  <NodeDetailsPanel
+                    open
+                    node={selectedNode}
+                    onClose={clearSelection}
+                    densityPreference={densityPreference}
+                  />
+                )}
               </div>
-              <div className="mt-1.5 grid grid-cols-3 gap-2 text-center text-xs">
-                <div>
-                  <p className="text-lg font-semibold">{nodes.length}</p>
-                  <p className="text-dimmed">Nodes</p>
-                </div>
-                <div>
-                  <p className="text-lg font-semibold text-emerald-500">{upNodes}</p>
-                  <p className="text-dimmed">Up</p>
-                </div>
-                <div>
-                  <p className="text-lg font-semibold">{edges.length}</p>
-                  <p className="text-dimmed">Edges</p>
-                </div>
-              </div>
-            </section>
-            {selectedEdge ? (
-              <ConnectionDetailsPanel
-                open
-                edge={selectedEdge}
-                onClose={clearSelection}
-                densityPreference={densityPreference}
-              />
-            ) : (
-              <NodeDetailsPanel
-                open
-                node={selectedNode}
-                onClose={clearSelection}
-                densityPreference={densityPreference}
-              />
-            )}
+            </div>
           </div>
 
-          <div className="xl:col-span-2">
-            <SelectionObservabilityPane node={selectedNode} edge={selectedEdge} />
-          </div>
-        </section>
+          <SelectionObservabilityPane expanded={graphCompact} node={selectedNode} edge={selectedEdge} />
+        </div>
 
-        {lastError ? (
+        {lastError && wsStatus !== "reconnecting" ? (
           <section className="mt-4 rounded-xl border border-rose-400/40 bg-rose-500/10 p-3 text-rose-300">
             <strong>Stream warning:</strong> {lastError}
           </section>
         ) : null}
       </section>
 
-      <NodeDetailsModal
-        open={defaultSurface === "modal" && Boolean(selectedNode)}
-        node={selectedNode}
-        onClose={clearSelection}
-        densityPreference={densityPreference}
-      />
-
       <SettingsDrawer
         open={settingsOpen}
         themePreference={themePreference}
         densityPreference={densityPreference}
-        detailsSurface={defaultSurface}
         trafficMode={trafficMode}
         effectiveTheme={effectiveTheme}
         userProfile={userProfile}
         onClose={() => setSettingsOpen(false)}
         onThemeChange={setThemePreference}
         onDensityChange={setDensityPreference}
-        onDetailsSurfaceChange={setDefaultSurface}
         onTrafficModeChange={setTrafficMode}
         onUserProfileChange={setUserProfile}
       />

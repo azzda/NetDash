@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "echo lint not configured for @netdash/frontend"
+    "lint": "eslint . --ext ts,tsx"
   },
   "dependencies": {
     "@netdash/shared": "workspace:*",

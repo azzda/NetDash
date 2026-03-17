@@ -3,13 +3,11 @@ import { type ChangeEvent, useEffect, useState } from "react";
 
 type ThemePreference = "system" | "dark" | "light";
 type DensityPreference = "compact" | "comfortable";
-type DetailsSurface = "panel" | "modal";
 
 interface SettingsDrawerProps {
   open: boolean;
   themePreference: ThemePreference;
   densityPreference: DensityPreference;
-  detailsSurface: DetailsSurface;
   trafficMode: TrafficMode;
   effectiveTheme: "dark" | "light";
   userProfile: {
@@ -21,7 +19,6 @@ interface SettingsDrawerProps {
   onClose: () => void;
   onThemeChange: (value: ThemePreference) => void;
   onDensityChange: (value: DensityPreference) => void;
-  onDetailsSurfaceChange: (value: DetailsSurface) => void;
   onTrafficModeChange: (value: TrafficMode) => void;
   onUserProfileChange: (value: { displayName: string; email: string; userId: string; role: string }) => void;
 }
@@ -30,14 +27,12 @@ export function SettingsDrawer({
   open,
   themePreference,
   densityPreference,
-  detailsSurface,
   trafficMode,
   effectiveTheme,
   userProfile,
   onClose,
   onThemeChange,
   onDensityChange,
-  onDetailsSurfaceChange,
   onTrafficModeChange,
   onUserProfileChange,
 }: SettingsDrawerProps) {
@@ -61,10 +56,6 @@ export function SettingsDrawer({
 
   const handleDensity = (event: ChangeEvent<HTMLSelectElement>) => {
     onDensityChange(event.target.value as DensityPreference);
-  };
-
-  const handleSurface = (event: ChangeEvent<HTMLSelectElement>) => {
-    onDetailsSurfaceChange(event.target.value as DetailsSurface);
   };
 
   const handleTrafficMode = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -150,22 +141,6 @@ export function SettingsDrawer({
             <select value={densityPreference} onChange={handleDensity} className="input-control mt-1 w-full">
               <option value="compact">Compact</option>
               <option value="comfortable">Comfortable</option>
-            </select>
-          </label>
-        </section>
-
-        <section className="surface-card mt-4 space-y-3 p-3">
-          <div>
-            <h3 className="text-sm font-semibold">Interaction</h3>
-            <p className="mt-1 text-xs text-dimmed">
-              Choose how selected asset details should appear by default.
-            </p>
-          </div>
-          <label className="block text-xs font-medium text-dimmed">
-            Details surface
-            <select value={detailsSurface} onChange={handleSurface} className="input-control mt-1 w-full">
-              <option value="panel">Side panel</option>
-              <option value="modal">Modal</option>
             </select>
           </label>
         </section>

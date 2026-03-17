@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "echo lint not configured for @netdash/backend"
+    "lint": "eslint . --ext ts"
   },
   "dependencies": {
     "@netdash/shared": "workspace:*",

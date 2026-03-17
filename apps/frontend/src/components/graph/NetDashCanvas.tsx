@@ -193,7 +193,7 @@ export function NetDashCanvas({
   };
 
   return (
-    <div className="surface-canvas relative h-[560px] rounded-xl">
+    <div className="surface-canvas relative h-full rounded-xl">
       <ReactFlow
         nodes={dagNodes}
         edges={flowEdges}

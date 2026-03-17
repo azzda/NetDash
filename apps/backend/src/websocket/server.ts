@@ -29,6 +29,11 @@ export function attachWebSocketServer(port: number): WebSocketServer {
   const wss = new WebSocketServer({ port });
 
   wss.on("connection", (socket) => {
+    let isAlive = true;
+    socket.on("pong", () => {
+      isAlive = true;
+    });
+
     const bootstrap: NetDashWsMessage = {
       protocolVersion: NETDASH_PROTOCOL_VERSION,
       type: "graph.snapshot",
@@ -110,8 +115,18 @@ export function attachWebSocketServer(port: number): WebSocketServer {
       }
     }, 1600);
 
+    const pingTimer = setInterval(() => {
+      if (!isAlive) {
+        socket.terminate();
+        return;
+      }
+      isAlive = false;
+      socket.ping();
+    }, 30_000);
+
     socket.on("close", () => {
       clearInterval(timer);
+      clearInterval(pingTimer);
     });
   });
 

@@ -7,11 +7,12 @@ import {
 interface WsClientOptions {
   onMessage: (message: ReturnType<typeof wsMessageSchema.parse>) => void;
   onError?: (error: string) => void;
+  onStatusChange?: (status: "connected" | "reconnecting" | "disconnected") => void;
 }
 
 const frontEnv = frontendEnvSchema.parse(import.meta.env);
 
-export function createWsClient({ onMessage, onError }: WsClientOptions) {
+export function createWsClient({ onMessage, onError, onStatusChange }: WsClientOptions) {
   let socket: WebSocket | undefined;
   let reconnectAttempts = 0;
   let closedByUser = false;
@@ -21,6 +22,7 @@ export function createWsClient({ onMessage, onError }: WsClientOptions) {
 
     socket.onopen = () => {
       reconnectAttempts = 0;
+      onStatusChange?.("connected");
     };
 
     socket.onmessage = (event) => {
@@ -41,9 +43,11 @@ export function createWsClient({ onMessage, onError }: WsClientOptions) {
 
     socket.onclose = () => {
       if (closedByUser) {
+        onStatusChange?.("disconnected");
         return;
       }
 
+      onStatusChange?.("reconnecting");
       reconnectAttempts += 1;
       const jitter = Math.floor(Math.random() * 150);
       const delay = Math.min(5000, 250 * 2 ** reconnectAttempts) + jitter;
