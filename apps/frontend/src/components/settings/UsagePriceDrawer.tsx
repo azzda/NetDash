@@ -1,10 +1,6 @@
 import { useMemo, useState } from "react";
-
-interface UserProfile {
-  displayName: string;
-  userId: string;
-  role: string;
-}
+import type { CurrencyPreference, UserProfile } from "../../lib/uiPreferences";
+import { formatCurrency } from "../../lib/uiPreferences";
 
 interface UsagePoint {
   ts: number;
@@ -17,13 +13,16 @@ interface UsagePriceDrawerProps {
   onClose: () => void;
   userProfile: UserProfile;
   usageSeries: UsagePoint[];
+  currencyPreference: CurrencyPreference;
 }
 
-function formatCurrency(value: number) {
-  return `$${value.toFixed(2)}`;
-}
-
-export function UsagePriceDrawer({ open, onClose, userProfile, usageSeries }: UsagePriceDrawerProps) {
+export function UsagePriceDrawer({
+  open,
+  onClose,
+  userProfile,
+  usageSeries,
+  currencyPreference,
+}: UsagePriceDrawerProps) {
   const [expanded, setExpanded] = useState(false);
 
   const totalCost = useMemo(
@@ -75,7 +74,7 @@ export function UsagePriceDrawer({ open, onClose, userProfile, usageSeries }: Us
           <div className="grid gap-3 sm:grid-cols-2">
             <article className="surface-subtle rounded-xl p-3">
               <p className="text-[11px] text-dimmed">Estimated monthly cost</p>
-              <p className="mt-1 text-xl font-semibold text-primary">{formatCurrency(totalCost)}</p>
+              <p className="mt-1 text-xl font-semibold text-primary">{formatCurrency(totalCost, currencyPreference)}</p>
             </article>
             <article className="surface-subtle rounded-xl p-3">
               <p className="text-[11px] text-dimmed">Average draw</p>
@@ -87,7 +86,7 @@ export function UsagePriceDrawer({ open, onClose, userProfile, usageSeries }: Us
             <path d={path} fill="none" stroke="var(--edge-activity)" strokeWidth="2.5" strokeLinecap="round" />
             {points.map((point) => (
               <circle key={point.ts} cx={point.x} cy={point.y} r="3.6" fill="var(--edge-activity-secondary)">
-                <title>{`${new Date(point.ts).toLocaleDateString()} · ${point.powerWatts.toFixed(1)} W · ${formatCurrency(point.cost)}`}</title>
+                <title>{`${new Date(point.ts).toLocaleDateString()} · ${point.powerWatts.toFixed(1)} W · ${formatCurrency(point.cost, currencyPreference)}`}</title>
               </circle>
             ))}
           </svg>
@@ -113,17 +112,17 @@ export function UsagePriceDrawer({ open, onClose, userProfile, usageSeries }: Us
                   <tr>
                     <td className="px-3 py-2 text-primary">Core routing & switching</td>
                     <td className="px-3 py-2 text-primary">42%</td>
-                    <td className="px-3 py-2 text-primary">{formatCurrency(totalCost * 0.42)}</td>
+                    <td className="px-3 py-2 text-primary">{formatCurrency(totalCost * 0.42, currencyPreference)}</td>
                   </tr>
                   <tr>
                     <td className="px-3 py-2 text-primary">Compute & storage</td>
                     <td className="px-3 py-2 text-primary">38%</td>
-                    <td className="px-3 py-2 text-primary">{formatCurrency(totalCost * 0.38)}</td>
+                    <td className="px-3 py-2 text-primary">{formatCurrency(totalCost * 0.38, currencyPreference)}</td>
                   </tr>
                   <tr>
                     <td className="px-3 py-2 text-primary">Service delivery</td>
                     <td className="px-3 py-2 text-primary">20%</td>
-                    <td className="px-3 py-2 text-primary">{formatCurrency(totalCost * 0.2)}</td>
+                    <td className="px-3 py-2 text-primary">{formatCurrency(totalCost * 0.2, currencyPreference)}</td>
                   </tr>
                 </tbody>
               </table>

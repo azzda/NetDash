@@ -19,7 +19,7 @@ export function SelectionObservabilityPane({ node, edge, expanded = false }: Sel
   const activeDescription = node
     ? "Metrics and logs for the selected node."
     : edge
-      ? "Aggregated connection telemetry, event trail, and placeholder link diagnostics."
+      ? "Aggregated connector telemetry, event stream, and link diagnostics with flexible graph and log workspaces."
       : "Select a node or connector to inspect its metrics, traffic history, and recent events.";
 
   const details = node?.data.details ?? edge?.data;
@@ -31,11 +31,16 @@ export function SelectionObservabilityPane({ node, edge, expanded = false }: Sel
           <h3 className="text-sm font-semibold text-primary">{activeTitle}</h3>
           <p className="mt-1 text-xs text-dimmed">{activeDescription}</p>
         </div>
-        {edge ? (
+        <div className="flex flex-wrap items-center gap-2">
+          {edge ? (
+            <div className="rounded-full bg-white/5 px-3 py-1 text-[11px] font-medium text-dimmed">
+              {edge.data?.trafficMbps?.toFixed(1) ?? "0.0"} Mbps total
+            </div>
+          ) : null}
           <div className="rounded-full bg-white/5 px-3 py-1 text-[11px] font-medium text-dimmed">
-            {edge.data?.trafficMbps?.toFixed(1) ?? "0.0"} Mbps total
+            Graphs + Logs
           </div>
-        ) : null}
+        </div>
       </div>
 
       {node || edge ? (

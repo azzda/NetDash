@@ -119,7 +119,7 @@ interface NetDashCanvasProps {
   trafficMode: TrafficMode;
   onTrafficModeChange: (mode: TrafficMode) => void;
   densityPreference: "compact" | "comfortable";
-  effectiveTheme: "dark" | "light";
+  effectiveTheme: "dark" | "light" | "custom";
   onNodeClick: (nodeId: string) => void;
   onEdgeClick: (edgeId: string) => void;
   onPaneClick: () => void;

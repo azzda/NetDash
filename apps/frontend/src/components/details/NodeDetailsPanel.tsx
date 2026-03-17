@@ -12,11 +12,8 @@ export function NodeDetailsPanel({ node, open, onClose, densityPreference }: Nod
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      requestAnimationFrame(() => setMounted(true));
-    } else {
-      setMounted(false);
-    }
+    const frame = requestAnimationFrame(() => setMounted(open));
+    return () => cancelAnimationFrame(frame);
   }, [open]);
 
   if (!open && !mounted) {

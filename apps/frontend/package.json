@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@netdash/shared": "workspace:*",
+    "ansi_up": "^6.0.6",
     "dagre": "^0.8.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

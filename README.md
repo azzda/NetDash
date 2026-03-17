@@ -40,12 +40,14 @@ Frontend: `http://localhost:5173` · Backend WS: `ws://localhost:4001`
 - Three node types: Hardware, Host, Service
 - Three traffic modes: Off, Combined, Bidirectional
 - Click-to-select nodes and connectors — mutual exclusivity enforced in Zustand store
-- **Scroll-driven observability expansion** — graph compacts to a strip, bottom pane expands to full-screen on scroll
-- Right inspector panel: compact node identity or connector Side A / Side B comparison card
-- Bottom observability pane: mini charts + searchable logs; severity filter and extended limits when expanded
-- Live-updating usage/pricing drawer (simple + expanded views, 4 s updates)
+- **Scroll-driven observability expansion** — graph compacts to a strip and the bottom workspace expands as you move down the page
+- Adaptive title bar overview with integrated topology counts, current price, and average price snapshot
+- Right inspector panel is node-focused; selected connector details are shown in a dedicated graphical strip below the canvas
+- Bottom observability workspace: Graphs / Logs tabs, resizable horizontal graph panels (max 3), split log boxes (max 2), searchable ANSI-capable text log streams, and hover tooltips on charts
+- Live-updating usage/pricing drawer with selectable currency symbol (EUR default, USD, JPY)
 - App info drawer with generated build-time dependency manifest
-- Settings drawer: profile, theme, density, traffic mode — all persisted to localStorage
+- Settings drawer: profile, theme mode, density, traffic mode, currency, and a custom 3-token palette — all persisted to localStorage
+- Animated NetDash title status badge with healthy/warning/issue visual states
 - WebSocket status indicator (connected / reconnecting / disconnected) in title bar
 - Ping/pong keepalive on backend (30 s interval, stale connections terminated)
 - ESLint flat config + Prettier across workspace

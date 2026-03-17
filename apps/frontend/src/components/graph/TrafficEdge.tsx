@@ -1,7 +1,6 @@
 import {
   BaseEdge,
   EdgeLabelRenderer,
-  getBezierPath,
   getStraightPath,
   type EdgeProps,
 } from "reactflow";
@@ -57,12 +56,6 @@ export function TrafficEdge({
   selected,
   data,
 }: EdgeProps<TrafficEdgeData>) {
-  const [basePath, centerX, centerY] = getBezierPath({
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-  });
   const [straightPath, straightCenterX, straightCenterY] = getStraightPath({
     sourceX,
     sourceY,
