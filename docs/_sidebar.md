@@ -5,3 +5,5 @@
 - **Reference**
   - [Features](features.md)
   - [Architecture](architecture.md)
+- **Project**
+  - [Scope Map](SCOPE.md)
