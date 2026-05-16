@@ -6,4 +6,4 @@
   - [Features](features.md)
   - [Architecture](architecture.md)
 - **Project**
-  - [Scope Map](SCOPE.md)
+  - [Feature Progress](PROGRESS.md)

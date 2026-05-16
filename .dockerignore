@@ -1,0 +1,8 @@
+node_modules
+.git
+.github
+docs
+*.md
+.prettierrc
+.prettierignore
+vitest.config.mts
