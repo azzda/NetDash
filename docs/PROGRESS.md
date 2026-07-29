@@ -56,19 +56,31 @@
 
 ## Data & Integration
 
-- [ ] NetBox as topology/IPAM source of truth (replace the mock seeder)
-- [ ] Prometheus range queries for node/edge metrics
-- [ ] Loki queries for the log panes
-- [ ] Real device polling (Unifi, Proxmox, MikroTik)
-- [ ] ntopng traffic data
-- [ ] Agent-based metrics collection
-- [ ] Persistent storage (SQLite / Postgres)
+- [ ] Provider interface (pluggable data sources, mock behind a feature flag)
+- [ ] NetBox adapter — topology, inventory, VLANs, cables (**seeded and ready**: 11 devices, 63 interfaces, 16 cables)
+- [ ] Prometheus adapter — node/service status and metrics
+- [ ] Loki adapter — real log panes
+- [ ] Hubble adapter — real flows on edges
+- [ ] Argo CD adapter — app health / sync state
+- [ ] Proxmox + TrueNAS adapters — capacity, power state, pools
+- [ ] Physical vs. service topology view split
+- [ ] Persistent storage (SQLite / Postgres) for NetDash's own state
 - [ ] Historical data retention
+
+## Federation & Self-service
+
+- [ ] Site registry (per-site standalone instances)
+- [ ] Connector workflow — approve/revoke access to a remote workspace
+- [ ] Read-only remote agent + site-to-site transport (VLAN 80)
+- [ ] Cross-site object references
+- [ ] Storage quota self-service
+- [ ] Compute requests against the standby Proxmox node
+- [ ] General request/approval workflow
 
 ## Deployment & Ops
 
 - [x] pnpm monorepo
-- [x] Vitest test harness (46 tests)
+- [x] Vitest test harness (53 tests)
 - [x] Dockerfile (multi-stage build, non-root, build metadata)
 - [x] docker-compose for homelab
 - [x] GitHub Actions CI (verify → image → GitOps promote)
@@ -79,16 +91,16 @@
 - [x] Single-origin HTTP + WebSocket (`/ws`) — one Ingress host
 - [x] Kustomize base + test/prod overlays
 - [x] Argo CD Application manifests (`deploy/argocd/`)
-- [ ] Installed in the homelab cluster (Argo app + reflector namespaces)
+- [x] **test environment live** — `netdash-test.lab.azzda.cloud`, internal only
+- [ ] Prod environment (gated on real data + OIDC)
 - [ ] Renovate/Dependabot for dependency + image bumps
 
 ## Auth & Multi-user
 
 - [ ] Keycloak OIDC login (homelab realm, `homelab-admins` gated)
-- [ ] Basic auth or token gate
-- [ ] Role-based access
-- [ ] Multi-user WebSocket sync
+- [ ] Per-user RBAC, including per sub-feature
 - [ ] Audit log
+- [ ] Multi-user WebSocket sync
 
 ---
 

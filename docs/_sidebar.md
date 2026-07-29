@@ -1,5 +1,6 @@
 - **Getting Started**
   - [Overview](README.md)
+  - [Vision & Architecture](vision.md)
   - [Quick Start](getting-started.md)
   - [Configuration](configuration.md)
 - **Reference**

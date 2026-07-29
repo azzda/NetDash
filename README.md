@@ -1,7 +1,9 @@
 # NetDash
 
-Homelab network topology dashboard — live graph, traffic visualization, and observability.
+Homelab observability interface first, management suite second — live topology, service and hardware views, and cross-site lab federation.
 
+> **What this is for:** [docs/vision.md](docs/vision.md) — read this before making architectural decisions.
+>
 > Full documentation: [docs/README.md](docs/README.md) (or run `pnpm docs:serve` for the browsable site)
 
 ## Packages
