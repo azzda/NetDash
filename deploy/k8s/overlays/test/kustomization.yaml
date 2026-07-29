@@ -27,6 +27,15 @@ configMapGenerator:
       - NETBOX_URL=http://netbox.netbox.svc.cluster.local
       - NETBOX_SITE=azzda-hq
       - NETDASH_REFRESH_INTERVAL_MS=60000
+      # Authentication. The client secret and session secret come from the
+      # netdash-secrets Secret; only non-sensitive settings live here.
+      # Access requires the app-netdash group; homelab-admins grants admin.
+      - NETDASH_AUTH=oidc
+      - NETDASH_OIDC_ISSUER=https://auth.azzda.cloud/realms/homelab
+      - NETDASH_OIDC_CLIENT_ID=netdash
+      - NETDASH_PUBLIC_URL=https://netdash-test.lab.azzda.cloud
+      - NETDASH_ALLOWED_GROUPS=app-netdash
+      - NETDASH_ADMIN_GROUPS=homelab-admins
 
 patches:
   - target:

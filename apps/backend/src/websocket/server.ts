@@ -1,4 +1,4 @@
-import type { Server as HttpServer } from "node:http";
+import type { IncomingMessage, Server as HttpServer } from "node:http";
 import { WebSocketServer, type WebSocket } from "ws";
 import {
   NETDASH_PROTOCOL_VERSION,
@@ -30,20 +30,40 @@ export interface WebSocketServerOptions {
   provider: GraphProvider;
   /** How often the provider is re-read. */
   refreshIntervalMs?: number;
+  /**
+   * Authorises the upgrade. The socket streams the entire topology, so it needs
+   * the same gate as the HTTP side - an unauthenticated WebSocket would be a
+   * hole straight past the login page.
+   */
+  authorizeRequest?: (req: IncomingMessage) => unknown | null;
 }
 
 /**
- * Rejects browser upgrades from origins outside the allowlist. Requests without
- * an `Origin` header (CLI clients, future collector agents) are not
- * browser-initiated and are left to transport-level auth instead.
+ * Rejects browser upgrades from origins outside the allowlist, and any upgrade
+ * without an authorised session.
+ *
+ * Requests without an `Origin` header are not browser-initiated; they still
+ * have to pass the session check.
  */
-function createOriginGuard(allowedOrigin: string | undefined) {
+function createUpgradeGuard(
+  allowedOrigin: string | undefined,
+  authorizeRequest: WebSocketServerOptions["authorizeRequest"],
+) {
   const allowlist = parseAllowedOrigins(allowedOrigin ?? "*");
-  if (allowlist === "*") {
+
+  if (allowlist === "*" && !authorizeRequest) {
     return undefined;
   }
 
-  return (info: { origin: string }) => !info.origin || allowlist.includes(info.origin);
+  return (info: { origin: string; req: IncomingMessage }) => {
+    if (allowlist !== "*" && info.origin && !allowlist.includes(info.origin)) {
+      return false;
+    }
+    if (authorizeRequest && !authorizeRequest(info.req)) {
+      return false;
+    }
+    return true;
+  };
 }
 
 function envelope(message: NetDashWsMessage): string {
@@ -60,7 +80,7 @@ export function attachWebSocketServer(options: WebSocketServerOptions): WebSocke
   let lastError: string | null = null;
   const sequences: Sequences = { node: {}, edge: {} };
 
-  const verifyClient = createOriginGuard(options.allowedOrigin);
+  const verifyClient = createUpgradeGuard(options.allowedOrigin, options.authorizeRequest);
   const wss = options.server
     ? new WebSocketServer({ server: options.server, path: options.path ?? "/ws", verifyClient })
     : new WebSocketServer({ port: options.port, verifyClient });

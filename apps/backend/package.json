@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@netdash/shared": "workspace:*",
+    "jose": "^5.9.6",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "ws": "^8.18.0"

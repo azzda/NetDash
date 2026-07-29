@@ -21,6 +21,7 @@ import {
   storageKeys,
 } from "./lib/uiPreferences";
 import { createWsClient } from "./services/wsClient";
+import { fetchAuthState, logout, startLogin, type AuthState } from "./services/authClient";
 import { useNetDashStore } from "./store/useNetDashStore";
 
 type WorkspaceMode = "topology" | "inventory";
@@ -82,6 +83,36 @@ export default function App() {
     applyMessage,
   } = useNetDashStore();
   const deferredSearchQuery = useDeferredValue(searchQuery.trim().toLowerCase());
+  const [authState, setAuthState] = useState<AuthState | null>(null);
+
+  // Who am I? When the backend enforces auth and we have no session, hand over
+  // to the IdP rather than rendering an empty dashboard.
+  useEffect(() => {
+    let cancelled = false;
+
+    void fetchAuthState()
+      .then((state) => {
+        if (cancelled) {
+          return;
+        }
+        setAuthState(state);
+        if (state.authEnabled && !state.authenticated) {
+          startLogin();
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAuthState({ authEnabled: false, authenticated: false });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const signedInLabel =
+    authState?.user?.name ?? authState?.user?.username ?? userProfile.displayName;
 
   useEffect(() => {
     const ws = createWsClient({
@@ -491,12 +522,28 @@ export default function App() {
             </button>
             <div className="flex items-center gap-2 rounded-lg px-2 py-1">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-600 text-xs font-bold text-white">
-                {userProfile.displayName.slice(0, 1).toUpperCase()}
+                {signedInLabel.slice(0, 1).toUpperCase()}
               </div>
-              <span className="hidden text-sm font-medium sm:inline">
-                {userProfile.displayName}
-              </span>
+              <span className="hidden text-sm font-medium sm:inline">{signedInLabel}</span>
+              {authState?.user?.role ? (
+                <span
+                  className="hidden rounded bg-slate-700/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-200 sm:inline"
+                  title={`Groups: ${authState.user.groups.join(", ") || "none"}`}
+                >
+                  {authState.user.role}
+                </span>
+              ) : null}
             </div>
+            {authState?.authEnabled && authState.authenticated ? (
+              <button
+                type="button"
+                onClick={() => void logout()}
+                className="button-subtle px-2 py-1 text-xs"
+                title="Sign out"
+              >
+                ⎋
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={handleQuickThemeToggle}

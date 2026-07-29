@@ -31,6 +31,26 @@ export const backendEnvSchema = z.object({
   /** Optional NetBox site slug to restrict the topology to. */
   NETBOX_SITE: z.string().optional(),
 
+  /**
+   * `disabled` (default) treats every caller as an anonymous admin, which is
+   * only ever appropriate on a laptop. Any deployment reachable by anyone else
+   * must set `oidc`.
+   */
+  NETDASH_AUTH: z.enum(["disabled", "oidc"]).default("disabled"),
+  /** Keycloak realm URL, e.g. https://auth.example.com/realms/homelab */
+  NETDASH_OIDC_ISSUER: z.string().url().optional(),
+  NETDASH_OIDC_CLIENT_ID: z.string().optional(),
+  NETDASH_OIDC_CLIENT_SECRET: z.string().optional(),
+  /** Public base URL of this instance; the OIDC redirect URI is derived from it. */
+  NETDASH_PUBLIC_URL: z.string().url().optional(),
+  /** HMAC key for the session cookie. Rotating it signs everyone out. */
+  NETDASH_SESSION_SECRET: z.string().min(32).optional(),
+  NETDASH_SESSION_TTL_SECONDS: z.coerce.number().int().positive().default(28_800),
+  /** Comma-separated groups granting admin. */
+  NETDASH_ADMIN_GROUPS: z.string().optional(),
+  /** Comma-separated groups granting any access at all. */
+  NETDASH_ALLOWED_GROUPS: z.string().optional(),
+
   NETDASH_VERSION: z.string().default("dev"),
   NETDASH_COMMIT: z.string().default("unknown"),
   NETDASH_BUILD_TIME: z.string().default("unknown"),
