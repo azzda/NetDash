@@ -111,11 +111,15 @@ jobs:
           echo "--- SPA ---"
           curl -fsS http://localhost:4000/ | grep -q 'id="root"'
           echo "--- WebSocket upgrade ---"
-          curl -isS --max-time 5 \
+          # The socket streams graph updates forever, so write to a file with a
+          # short timeout instead of piping into head (which would SIGPIPE curl).
+          curl -isS --max-time 3 -o /tmp/ws.out \
             -H "Connection: Upgrade" -H "Upgrade: websocket" \
             -H "Sec-WebSocket-Version: 13" \
             -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
-            http://localhost:4000/ws | head -n 1 | grep -q "101"
+            http://localhost:4000/ws || true
+          head -n 1 /tmp/ws.out
+          head -n 1 /tmp/ws.out | grep -q "101"
           docker rm -f netdash-smoke
 
       - name: Log in to GitHub Container Registry
