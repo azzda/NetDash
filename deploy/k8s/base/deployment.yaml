@@ -32,6 +32,11 @@ spec:
           envFrom:
             - configMapRef:
                 name: netdash-env
+            # Credentials for the upstream data sources (e.g. the NetBox token).
+            # Optional so the mock-only path needs no secret at all.
+            - secretRef:
+                name: netdash-secrets
+                optional: true
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

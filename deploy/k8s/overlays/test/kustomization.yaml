@@ -19,6 +19,14 @@ configMapGenerator:
       - NETDASH_HTTP_PORT=4000
       - NETDASH_WS_PATH=/ws
       - NETDASH_ALLOWED_ORIGIN=https://netdash-test.lab.azzda.cloud
+      # Real topology from NetBox. The token comes from the netdash-secrets
+      # Secret (SOPS-managed in the azzdacloud repo) and is read-only.
+      # The Service is addressed directly rather than hairpinning through
+      # Traefik; netbox's allowedHosts includes this name.
+      - NETDASH_SOURCE=netbox
+      - NETBOX_URL=http://netbox.netbox.svc.cluster.local
+      - NETBOX_SITE=azzda-hq
+      - NETDASH_REFRESH_INTERVAL_MS=60000
 
 patches:
   - target:

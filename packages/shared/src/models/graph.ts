@@ -82,12 +82,20 @@ export interface NetDashNode {
   };
 }
 
+export type ConnectorStatus = "connected" | "planned" | "decommissioning" | "unknown";
+
 export interface NetDashEdgeData {
   animated?: boolean;
   connectorUuid?: string;
   displayName?: string;
   protocol?: string;
   vlan?: string;
+  /**
+   * Whether the link physically exists. A source of truth like NetBox models
+   * planned cabling alongside live cabling, and the difference matters: the
+   * graph should be able to show what is coming, not just what is.
+   */
+  status?: ConnectorStatus;
   sideA?: ConnectorEndpointDetails;
   sideB?: ConnectorEndpointDetails;
   policyReferences?: ConnectorPolicyReference[];

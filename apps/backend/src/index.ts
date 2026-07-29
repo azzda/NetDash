@@ -5,10 +5,12 @@ import cors from "cors";
 import express from "express";
 import type { WebSocketServer } from "ws";
 import { backendEnvSchema, parseAllowedOrigins } from "@netdash/shared";
+import { createProvider } from "./providers";
 import { attachWebSocketServer } from "./websocket/server";
 
 const env = backendEnvSchema.parse(process.env);
 const isProduction = process.env.NODE_ENV === "production";
+const provider = createProvider(env);
 
 const buildInfo = {
   version: env.NETDASH_VERSION,
@@ -27,6 +29,7 @@ app.get(["/health", "/healthz", "/readyz"], (_req, res) => {
     status: "ok",
     service: "netdash-backend",
     ...buildInfo,
+    source: provider.name,
     httpPort: env.NETDASH_HTTP_PORT,
     wsPath: env.NETDASH_WS_PATH,
     wsStandalonePort: env.NETDASH_WS_PORT || null,
@@ -59,6 +62,8 @@ const wss = attachWebSocketServer({
   server: httpServer,
   path: env.NETDASH_WS_PATH,
   allowedOrigin: env.NETDASH_ALLOWED_ORIGIN,
+  provider,
+  refreshIntervalMs: env.NETDASH_REFRESH_INTERVAL_MS,
 });
 
 let standaloneWss: WebSocketServer | undefined;
@@ -66,6 +71,8 @@ if (env.NETDASH_WS_PORT > 0) {
   standaloneWss = attachWebSocketServer({
     port: env.NETDASH_WS_PORT,
     allowedOrigin: env.NETDASH_ALLOWED_ORIGIN,
+    provider,
+    refreshIntervalMs: env.NETDASH_REFRESH_INTERVAL_MS,
   });
   console.log(`NetDash standalone WebSocket listening on ws://localhost:${env.NETDASH_WS_PORT}`);
 }
@@ -73,7 +80,7 @@ if (env.NETDASH_WS_PORT > 0) {
 httpServer.listen(env.NETDASH_HTTP_PORT, () => {
   console.log(
     `NetDash backend ${buildInfo.version} (${buildInfo.commit}) listening on ` +
-      `http://localhost:${env.NETDASH_HTTP_PORT} (ws: ${env.NETDASH_WS_PATH})`,
+      `http://localhost:${env.NETDASH_HTTP_PORT} (ws: ${env.NETDASH_WS_PATH}, source: ${provider.name})`,
   );
 });
 

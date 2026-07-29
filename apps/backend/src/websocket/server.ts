@@ -5,11 +5,12 @@ import {
   parseAllowedOrigins,
   wsMessageSchema,
   type FlowMetricUpdatePayload,
+  type GraphSnapshotPayload,
   type NetDashWsMessage,
   type NodeDetailsUpdatePayload,
   type NodeStatusUpdatePayload,
 } from "@netdash/shared";
-import { createSeededSnapshot } from "../mock/seededGraph";
+import type { GraphProvider } from "../providers";
 
 interface Sequences {
   node: Record<string, number>;
@@ -17,7 +18,7 @@ interface Sequences {
 }
 
 export interface WebSocketServerOptions {
-  /** Attach to an existing HTTP server (single-origin mode — preferred). */
+  /** Attach to an existing HTTP server (single-origin mode - preferred). */
   server?: HttpServer;
   /** Path the WebSocket is served on when attached to an HTTP server. */
   path?: string;
@@ -25,12 +26,16 @@ export interface WebSocketServerOptions {
   port?: number;
   /** `*` or a comma-separated origin allowlist enforced on upgrade. */
   allowedOrigin?: string;
+  /** Where the topology comes from. */
+  provider: GraphProvider;
+  /** How often the provider is re-read. */
+  refreshIntervalMs?: number;
 }
 
 /**
- * Rejects browser upgrades from origins outside the allowlist. Requests without an
- * `Origin` header (CLI clients, future collector agents) are not browser-initiated
- * and are left to transport-level auth instead.
+ * Rejects browser upgrades from origins outside the allowlist. Requests without
+ * an `Origin` header (CLI clients, future collector agents) are not
+ * browser-initiated and are left to transport-level auth instead.
  */
 function createOriginGuard(allowedOrigin: string | undefined) {
   const allowlist = parseAllowedOrigins(allowedOrigin ?? "*");
@@ -41,22 +46,156 @@ function createOriginGuard(allowedOrigin: string | undefined) {
   return (info: { origin: string }) => !info.origin || allowlist.includes(info.origin);
 }
 
+function envelope(message: NetDashWsMessage): string {
+  return JSON.stringify(message);
+}
+
 export function attachWebSocketServer(options: WebSocketServerOptions): WebSocketServer {
-  const snapshot = createSeededSnapshot(42);
+  const { provider } = options;
+  const refreshIntervalMs = options.refreshIntervalMs ?? 60_000;
+
+  // One shared snapshot, refreshed centrally, so N browsers do not mean N times
+  // the load on the upstream source.
+  let snapshot: GraphSnapshotPayload = { nodes: [], edges: [], sequence: 0, ts: Date.now() };
+  let lastError: string | null = null;
   const sequences: Sequences = { node: {}, edge: {} };
-
-  for (const node of snapshot.nodes) {
-    sequences.node[node.identity.id] = snapshot.sequence;
-  }
-
-  for (const edge of snapshot.edges) {
-    sequences.edge[edge.id] = snapshot.sequence;
-  }
 
   const verifyClient = createOriginGuard(options.allowedOrigin);
   const wss = options.server
     ? new WebSocketServer({ server: options.server, path: options.path ?? "/ws", verifyClient })
     : new WebSocketServer({ port: options.port, verifyClient });
+
+  function broadcast(message: NetDashWsMessage) {
+    const payload = envelope(message);
+    for (const client of wss.clients) {
+      if (client.readyState === client.OPEN) {
+        client.send(payload);
+      }
+    }
+  }
+
+  async function refresh(initial = false): Promise<void> {
+    try {
+      const next = await provider.getSnapshot();
+      next.sequence = snapshot.sequence + 1;
+      snapshot = next;
+
+      for (const node of snapshot.nodes) {
+        sequences.node[node.identity.id] = snapshot.sequence;
+      }
+      for (const edge of snapshot.edges) {
+        sequences.edge[edge.id] = snapshot.sequence;
+      }
+
+      if (lastError) {
+        console.log(`[${provider.name}] recovered after error`);
+        lastError = null;
+      }
+      if (initial) {
+        console.log(
+          `[${provider.name}] loaded ${snapshot.nodes.length} nodes, ${snapshot.edges.length} edges`,
+        );
+      } else {
+        broadcast({
+          protocolVersion: NETDASH_PROTOCOL_VERSION,
+          type: "graph.snapshot",
+          payload: snapshot,
+          ts: Date.now(),
+        });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      // Keep serving the last good snapshot: a blip upstream should not blank
+      // the dashboard.
+      if (message !== lastError) {
+        console.error(`[${provider.name}] refresh failed: ${message}`);
+        lastError = message;
+      }
+      broadcast({
+        protocolVersion: NETDASH_PROTOCOL_VERSION,
+        type: "error",
+        payload: { message: `Topology refresh failed: ${message}`, recoverable: true },
+        ts: Date.now(),
+      });
+    }
+  }
+
+  const ready = refresh(true);
+  const refreshTimer = setInterval(() => void refresh(), refreshIntervalMs);
+  refreshTimer.unref?.();
+
+  function emitMockUpdates(socket: WebSocket) {
+    if (!snapshot.nodes.length || !snapshot.edges.length) {
+      return;
+    }
+
+    const randomNode = snapshot.nodes[Math.floor(Math.random() * snapshot.nodes.length)];
+    const randomEdge = snapshot.edges[Math.floor(Math.random() * snapshot.edges.length)];
+
+    sequences.node[randomNode.identity.id] = (sequences.node[randomNode.identity.id] ?? 0) + 1;
+    sequences.edge[randomEdge.id] = (sequences.edge[randomEdge.id] ?? 0) + 1;
+
+    const nodeUpdate: NetDashWsMessage = {
+      protocolVersion: NETDASH_PROTOCOL_VERSION,
+      type: "node.status.update",
+      payload: {
+        nodeId: randomNode.identity.id,
+        sequence: sequences.node[randomNode.identity.id],
+        status: Math.random() > 0.1 ? "up" : "down",
+        ts: Date.now(),
+      } satisfies NodeStatusUpdatePayload,
+      ts: Date.now(),
+    };
+
+    const flowUpdate: NetDashWsMessage = {
+      protocolVersion: NETDASH_PROTOCOL_VERSION,
+      type: "flow.metric.update",
+      payload: {
+        edgeId: randomEdge.id,
+        sequence: sequences.edge[randomEdge.id],
+        trafficOutMbps: Number((Math.random() * 110).toFixed(2)),
+        trafficInMbps: Number((Math.random() * 90).toFixed(2)),
+        packetsOutPerSec: Number((Math.random() * 2200).toFixed(0)),
+        packetsInPerSec: Number((Math.random() * 1800).toFixed(0)),
+        trafficMbps: 0,
+        packetsPerSec: 0,
+        animated: true,
+        ts: Date.now(),
+      } satisfies FlowMetricUpdatePayload,
+      ts: Date.now(),
+    };
+
+    flowUpdate.payload.trafficMbps = Number(
+      (flowUpdate.payload.trafficOutMbps + flowUpdate.payload.trafficInMbps).toFixed(2),
+    );
+    flowUpdate.payload.packetsPerSec =
+      flowUpdate.payload.packetsOutPerSec + flowUpdate.payload.packetsInPerSec;
+
+    sequences.node[randomNode.identity.id] += 1;
+
+    const detailUpdate: NetDashWsMessage = {
+      protocolVersion: NETDASH_PROTOCOL_VERSION,
+      type: "node.details.update",
+      payload: {
+        nodeId: randomNode.identity.id,
+        sequence: sequences.node[randomNode.identity.id],
+        details: {
+          ...randomNode.data.details,
+          certStatus: Math.random() > 0.8 ? "expiring" : "valid",
+          vpnStatus: Math.random() > 0.2 ? "connected" : "disconnected",
+        },
+        ts: Date.now(),
+      } satisfies NodeDetailsUpdatePayload,
+      ts: Date.now(),
+    };
+
+    for (const event of [nodeUpdate, flowUpdate, detailUpdate]) {
+      const parse = wsMessageSchema.safeParse(event);
+      if (parse.success && socket.readyState === socket.OPEN) {
+        socket.send(envelope(event));
+      }
+    }
+  }
 
   wss.on("connection", (socket: WebSocket) => {
     let isAlive = true;
@@ -64,86 +203,23 @@ export function attachWebSocketServer(options: WebSocketServerOptions): WebSocke
       isAlive = true;
     });
 
-    const bootstrap: NetDashWsMessage = {
-      protocolVersion: NETDASH_PROTOCOL_VERSION,
-      type: "graph.snapshot",
-      payload: snapshot,
-      ts: Date.now(),
-    };
-
-    socket.send(JSON.stringify(bootstrap));
-
-    const timer = setInterval(() => {
-      const randomNode = snapshot.nodes[Math.floor(Math.random() * snapshot.nodes.length)];
-      const randomEdge = snapshot.edges[Math.floor(Math.random() * snapshot.edges.length)];
-
-      sequences.node[randomNode.identity.id] += 1;
-      sequences.edge[randomEdge.id] += 1;
-      const nodeStatusSequence = sequences.node[randomNode.identity.id];
-      const edgeSequence = sequences.edge[randomEdge.id];
-
-      const nodeUpdate: NetDashWsMessage = {
-        protocolVersion: NETDASH_PROTOCOL_VERSION,
-        type: "node.status.update",
-        payload: {
-          nodeId: randomNode.identity.id,
-          sequence: nodeStatusSequence,
-          status: Math.random() > 0.1 ? "up" : "down",
-          ts: Date.now(),
-        } satisfies NodeStatusUpdatePayload,
-        ts: Date.now(),
-      };
-
-      const flowUpdate: NetDashWsMessage = {
-        protocolVersion: NETDASH_PROTOCOL_VERSION,
-        type: "flow.metric.update",
-        payload: {
-          edgeId: randomEdge.id,
-          sequence: edgeSequence,
-          trafficOutMbps: Number((Math.random() * 110).toFixed(2)),
-          trafficInMbps: Number((Math.random() * 90).toFixed(2)),
-          packetsOutPerSec: Number((Math.random() * 2200).toFixed(0)),
-          packetsInPerSec: Number((Math.random() * 1800).toFixed(0)),
-          trafficMbps: 0,
-          packetsPerSec: 0,
-          animated: true,
-          ts: Date.now(),
-        } satisfies FlowMetricUpdatePayload,
-        ts: Date.now(),
-      };
-
-      flowUpdate.payload.trafficMbps = Number(
-        (flowUpdate.payload.trafficOutMbps + flowUpdate.payload.trafficInMbps).toFixed(2),
-      );
-      flowUpdate.payload.packetsPerSec =
-        flowUpdate.payload.packetsOutPerSec + flowUpdate.payload.packetsInPerSec;
-
-      sequences.node[randomNode.identity.id] += 1;
-      const nodeDetailsSequence = sequences.node[randomNode.identity.id];
-
-      const detailUpdate: NetDashWsMessage = {
-        protocolVersion: NETDASH_PROTOCOL_VERSION,
-        type: "node.details.update",
-        payload: {
-          nodeId: randomNode.identity.id,
-          sequence: nodeDetailsSequence,
-          details: {
-            ...randomNode.data.details,
-            certStatus: Math.random() > 0.8 ? "expiring" : "valid",
-            vpnStatus: Math.random() > 0.2 ? "connected" : "disconnected",
-          },
-          ts: Date.now(),
-        } satisfies NodeDetailsUpdatePayload,
-        ts: Date.now(),
-      };
-
-      for (const event of [nodeUpdate, flowUpdate, detailUpdate]) {
-        const parse = wsMessageSchema.safeParse(event);
-        if (parse.success) {
-          socket.send(JSON.stringify(event));
-        }
+    void ready.then(() => {
+      if (socket.readyState === socket.OPEN) {
+        socket.send(
+          envelope({
+            protocolVersion: NETDASH_PROTOCOL_VERSION,
+            type: "graph.snapshot",
+            payload: snapshot,
+            ts: Date.now(),
+          }),
+        );
       }
-    }, 1600);
+    });
+
+    // Only a synthetic provider gets the demo ticker that randomises traffic and
+    // status. Inventing load on real hardware would make the dashboard actively
+    // misleading; live metrics arrive with the Prometheus provider.
+    const timer = provider.synthetic ? setInterval(() => emitMockUpdates(socket), 1600) : undefined;
 
     const pingTimer = setInterval(() => {
       if (!isAlive) {
@@ -155,10 +231,14 @@ export function attachWebSocketServer(options: WebSocketServerOptions): WebSocke
     }, 30_000);
 
     socket.on("close", () => {
-      clearInterval(timer);
+      if (timer) {
+        clearInterval(timer);
+      }
       clearInterval(pingTimer);
     });
   });
+
+  wss.on("close", () => clearInterval(refreshTimer));
 
   return wss;
 }

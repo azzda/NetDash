@@ -19,6 +19,18 @@ export const backendEnvSchema = z.object({
   NETDASH_WS_PORT: z.coerce.number().int().nonnegative().default(0),
   /** `*` or a comma-separated origin allowlist. Applies to CORS *and* WS upgrades. */
   NETDASH_ALLOWED_ORIGIN: z.string().default("http://localhost:5173"),
+
+  /** Where the topology comes from. `mock` keeps a fresh checkout dependency-free. */
+  NETDASH_SOURCE: z.enum(["mock", "netbox"]).default("mock"),
+  /** How often a real source is re-read, in milliseconds. */
+  NETDASH_REFRESH_INTERVAL_MS: z.coerce.number().int().positive().default(60_000),
+
+  NETBOX_URL: z.string().url().optional(),
+  /** NetBox 4.6 v2 token, i.e. `nbt_<key>.<secret>`. */
+  NETBOX_TOKEN: z.string().optional(),
+  /** Optional NetBox site slug to restrict the topology to. */
+  NETBOX_SITE: z.string().optional(),
+
   NETDASH_VERSION: z.string().default("dev"),
   NETDASH_COMMIT: z.string().default("unknown"),
   NETDASH_BUILD_TIME: z.string().default("unknown"),
