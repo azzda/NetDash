@@ -18,21 +18,23 @@ pnpm dev:backend   # terminal 1
 pnpm dev:frontend  # terminal 2
 ```
 
-Frontend: `http://localhost:5173` · Backend WS: `ws://localhost:4001`
+Frontend: `http://localhost:5173` · Backend + WebSocket: `http://localhost:4000` (`/ws`, proxied in dev)
+
+Container: `docker compose up --build` → `http://localhost:4000`
 
 ## Scripts
 
-| Command | Description |
-|---|---|
-| `pnpm dev:frontend` | Vite dev server with HMR |
-| `pnpm dev:backend` | tsx watch backend |
-| `pnpm build` | Full production build (all packages) |
-| `pnpm typecheck` | TypeScript check only |
-| `pnpm lint` | ESLint across workspace |
-| `pnpm lint:fix` | ESLint auto-fix |
-| `pnpm format` | Prettier write |
-| `pnpm format:check` | Prettier check (CI-safe) |
-| `pnpm docs:serve` | Browse docs locally at http://localhost:3000 |
+| Command             | Description                                  |
+| ------------------- | -------------------------------------------- |
+| `pnpm dev:frontend` | Vite dev server with HMR                     |
+| `pnpm dev:backend`  | tsx watch backend                            |
+| `pnpm build`        | Full production build (all packages)         |
+| `pnpm typecheck`    | TypeScript check only                        |
+| `pnpm lint`         | ESLint across workspace                      |
+| `pnpm lint:fix`     | ESLint auto-fix                              |
+| `pnpm format`       | Prettier write                               |
+| `pnpm format:check` | Prettier check (CI-safe)                     |
+| `pnpm docs:serve`   | Browse docs locally at http://localhost:3000 |
 
 ## Current features
 
@@ -51,6 +53,8 @@ Frontend: `http://localhost:5173` · Backend WS: `ws://localhost:4001`
 - WebSocket status indicator (connected / reconnecting / disconnected) in title bar
 - Ping/pong keepalive on backend (30 s interval, stale connections terminated)
 - ESLint flat config + Prettier across workspace
+- Single-origin HTTP + WebSocket (`/ws`) — one port, one Ingress host
+- Multi-stage non-root container image, GHCR publish, kustomize test/prod overlays for Argo CD (see [docs/deployment.md](docs/deployment.md))
 
 ## Tooling prerequisites
 
@@ -63,4 +67,3 @@ On Arch / CachyOS:
 sudo pacman -S nodejs npm
 sudo npm install -g pnpm
 ```
-

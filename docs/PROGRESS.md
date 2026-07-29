@@ -56,6 +56,9 @@
 
 ## Data & Integration
 
+- [ ] NetBox as topology/IPAM source of truth (replace the mock seeder)
+- [ ] Prometheus range queries for node/edge metrics
+- [ ] Loki queries for the log panes
 - [ ] Real device polling (Unifi, Proxmox, MikroTik)
 - [ ] ntopng traffic data
 - [ ] Agent-based metrics collection
@@ -66,15 +69,22 @@
 
 - [x] pnpm monorepo
 - [x] Vitest test harness (46 tests)
-- [x] Dockerfile (multi-stage build)
+- [x] Dockerfile (multi-stage build, non-root, build metadata)
 - [x] docker-compose for homelab
-- [x] GitHub Actions CI (test + build + Docker push)
+- [x] GitHub Actions CI (verify → image → GitOps promote)
+- [x] Image smoke test in CI (`/health`, SPA, `/ws` upgrade)
 - [x] Container registry publish (GHCR)
-- [x] Health check probes
+- [x] Health check probes (`/health`, `/readyz`)
 - [x] Graceful shutdown
+- [x] Single-origin HTTP + WebSocket (`/ws`) — one Ingress host
+- [x] Kustomize base + test/prod overlays
+- [x] Argo CD Application manifests (`deploy/argocd/`)
+- [ ] Installed in the homelab cluster (Argo app + reflector namespaces)
+- [ ] Renovate/Dependabot for dependency + image bumps
 
 ## Auth & Multi-user
 
+- [ ] Keycloak OIDC login (homelab realm, `homelab-admins` gated)
 - [ ] Basic auth or token gate
 - [ ] Role-based access
 - [ ] Multi-user WebSocket sync

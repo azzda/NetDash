@@ -6,27 +6,41 @@
 
 | Variable | Default | Description |
 |---|---|---|
-| `VITE_NETDASH_WS_URL` | `ws://localhost:4001` | WebSocket server URL |
+| `VITE_NETDASH_WS_PATH` | `/ws` | Same-origin WebSocket path |
+| `VITE_NETDASH_WS_URL` | *(unset)* | Absolute override; wins over the derived same-origin URL |
 
-Create `apps/frontend/.env.local` to override locally without committing:
+By default the client derives `ws(s)://<current host>/ws`, so nothing needs
+configuring: in production the backend serves the SPA and the WebSocket on one
+origin, and in dev Vite proxies `/ws` to the backend. Only set an override when
+pointing a local UI at a remote backend:
 
 ```env
-VITE_NETDASH_WS_URL=ws://192.168.1.10:4001
+VITE_NETDASH_WS_URL=ws://192.168.1.10:4000/ws
 ```
 
 ### Backend (`apps/backend/.env`)
 
 | Variable | Default | Description |
 |---|---|---|
-| `NETDASH_HTTP_PORT` | `4000` | HTTP port for the Express server (`/health`) |
-| `NETDASH_WS_PORT` | `4001` | WebSocket server port |
-
-Create `apps/backend/.env` to customise:
+| `NETDASH_HTTP_PORT` | `4000` | HTTP port (SPA, `/health`, `/readyz`, WebSocket) |
+| `NETDASH_WS_PATH` | `/ws` | Path the WebSocket is served on, same port as HTTP |
+| `NETDASH_WS_PORT` | `0` | Legacy standalone WebSocket listener; `0` disables it |
+| `NETDASH_ALLOWED_ORIGIN` | `http://localhost:5173` | `*` or a comma-separated allowlist; enforced for CORS **and** WebSocket upgrades |
+| `NETDASH_VERSION` | `dev` | Reported by `/health` (set by the Docker build) |
+| `NETDASH_COMMIT` | `unknown` | Reported by `/health` (set by the Docker build) |
+| `NETDASH_BUILD_TIME` | `unknown` | Reported by `/health` (set by the Docker build) |
 
 ```env
 NETDASH_HTTP_PORT=4000
-NETDASH_WS_PORT=4001
+NETDASH_WS_PATH=/ws
+NETDASH_ALLOWED_ORIGIN=https://netdash.lab.azzda.cloud
 ```
+
+### Health endpoints
+
+`/health`, `/healthz` and `/readyz` all return the same JSON — status, version,
+commit, build time, uptime and the active WebSocket path. Kubernetes probes use
+`/readyz` (readiness) and `/health` (liveness).
 
 ## Theme CSS variables
 

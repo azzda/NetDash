@@ -1,0 +1,37 @@
+# Argo CD Application for the NetDash TEST environment.
+#
+# HOW TO INSTALL (in the azzdacloud repo — this is a LIVE change, Argo self-heals):
+#   1. copy this file to homelab-infra/3-gitops-core/apps/netdash-test.yaml
+#   2. add `netdash-test` and `netdash` to BOTH reflector namespace lists in
+#      platform/cert-issuers/wildcard-certificate.yaml (so the wildcard TLS
+#      secret is copied into the new namespaces)
+#   3. add a `netdash-test` block to platform/network-policies/baseline.yaml
+#      only if you prefer central policy management — the overlay already ships
+#      an equivalent baseline-ingress policy
+#   4. commit + push to origin/main; the root app picks it up
+#
+# The manifests live in the NetDash repo (app-of-its-own pattern): CI writes the
+# image tag into deploy/k8s/overlays/test and Argo CD applies it. If the NetDash
+# repo is private, register repo credentials in Argo CD first.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: netdash-test
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/azzda/NetDash.git
+    targetRevision: main
+    path: deploy/k8s/overlays/test
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: netdash-test
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

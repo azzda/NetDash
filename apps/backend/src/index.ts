@@ -1,43 +1,87 @@
+import http from "node:http";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import cors from "cors";
 import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
-import { backendEnvSchema } from "@netdash/shared";
+import type { WebSocketServer } from "ws";
+import { backendEnvSchema, parseAllowedOrigins } from "@netdash/shared";
 import { attachWebSocketServer } from "./websocket/server";
 
 const env = backendEnvSchema.parse(process.env);
+const isProduction = process.env.NODE_ENV === "production";
+
+const buildInfo = {
+  version: env.NETDASH_VERSION,
+  commit: env.NETDASH_COMMIT,
+  buildTime: env.NETDASH_BUILD_TIME,
+};
+
+const allowedOrigins = parseAllowedOrigins(env.NETDASH_ALLOWED_ORIGIN);
 
 const app = express();
-app.use(cors({ origin: env.NETDASH_ALLOWED_ORIGIN }));
+app.disable("x-powered-by");
+app.use(cors({ origin: allowedOrigins === "*" ? "*" : allowedOrigins }));
 
-// In production, serve the frontend static build
-if (process.env.NODE_ENV === "production") {
-  const __dirname = path.dirname(fileURLToPath(import.meta.url));
-  const frontendDist = path.resolve(__dirname, "../../frontend/dist");
-  app.use(express.static(frontendDist));
-}
-
-app.get("/health", (_req, res) => {
+app.get(["/health", "/healthz", "/readyz"], (_req, res) => {
   res.json({
     status: "ok",
     service: "netdash-backend",
+    ...buildInfo,
     httpPort: env.NETDASH_HTTP_PORT,
-    wsPort: env.NETDASH_WS_PORT,
+    wsPath: env.NETDASH_WS_PATH,
+    wsStandalonePort: env.NETDASH_WS_PORT || null,
+    uptimeSec: Math.round(process.uptime()),
     ts: Date.now(),
   });
 });
 
-const httpServer = app.listen(env.NETDASH_HTTP_PORT, () => {
-  console.log(`NetDash backend listening on http://localhost:${env.NETDASH_HTTP_PORT}`);
+// In production the same process serves the built frontend, so the whole app is a
+// single origin behind a single Ingress host — which is also what the same-origin
+// WebSocket path below depends on.
+if (isProduction) {
+  const currentDir = path.dirname(fileURLToPath(import.meta.url));
+  const frontendDist = path.resolve(currentDir, "../../frontend/dist");
+  const indexHtml = path.join(frontendDist, "index.html");
+
+  app.use(express.static(frontendDist));
+  app.get("*", (req, res, next) => {
+    if (req.path === env.NETDASH_WS_PATH || req.path.startsWith("/api/")) {
+      next();
+      return;
+    }
+    res.sendFile(indexHtml);
+  });
+}
+
+const httpServer = http.createServer(app);
+
+const wss = attachWebSocketServer({
+  server: httpServer,
+  path: env.NETDASH_WS_PATH,
+  allowedOrigin: env.NETDASH_ALLOWED_ORIGIN,
 });
 
-const wss = attachWebSocketServer(env.NETDASH_WS_PORT);
-console.log(`NetDash WebSocket listening on ws://localhost:${env.NETDASH_WS_PORT}`);
+let standaloneWss: WebSocketServer | undefined;
+if (env.NETDASH_WS_PORT > 0) {
+  standaloneWss = attachWebSocketServer({
+    port: env.NETDASH_WS_PORT,
+    allowedOrigin: env.NETDASH_ALLOWED_ORIGIN,
+  });
+  console.log(`NetDash standalone WebSocket listening on ws://localhost:${env.NETDASH_WS_PORT}`);
+}
+
+httpServer.listen(env.NETDASH_HTTP_PORT, () => {
+  console.log(
+    `NetDash backend ${buildInfo.version} (${buildInfo.commit}) listening on ` +
+      `http://localhost:${env.NETDASH_HTTP_PORT} (ws: ${env.NETDASH_WS_PATH})`,
+  );
+});
 
 // Graceful shutdown
 function shutdown() {
   console.log("Shutting down...");
   wss.close();
+  standaloneWss?.close();
   httpServer.close(() => process.exit(0));
   setTimeout(() => process.exit(1), 5000);
 }

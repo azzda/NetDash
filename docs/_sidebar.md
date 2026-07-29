@@ -5,5 +5,6 @@
 - **Reference**
   - [Features](features.md)
   - [Architecture](architecture.md)
+  - [Deployment & CI/CD](deployment.md)
 - **Project**
   - [Feature Progress](PROGRESS.md)

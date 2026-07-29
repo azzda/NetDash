@@ -1,0 +1,30 @@
+# Argo CD Application for the NetDash PROD environment.
+#
+# Same install steps as netdash-test.yaml (copy into azzdacloud
+# homelab-infra/3-gitops-core/apps/, extend the reflector namespace lists).
+#
+# Difference from test: this overlay's image tag only moves when a `v*` git tag
+# is pushed in the NetDash repo, so prod is an explicit, auditable promotion of
+# an artifact that already ran in test.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: netdash
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/azzda/NetDash.git
+    targetRevision: main
+    path: deploy/k8s/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: netdash
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

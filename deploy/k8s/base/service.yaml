@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: netdash
+  labels:
+    app.kubernetes.io/name: netdash
+spec:
+  selector:
+    app.kubernetes.io/name: netdash
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

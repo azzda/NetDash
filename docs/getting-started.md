@@ -35,7 +35,7 @@ pnpm dev:backend
 pnpm dev:frontend
 ```
 
-The frontend defaults to `http://localhost:5173` and connects to the WebSocket server at `ws://localhost:4001`. Both addresses are configurable via environment variables — see [Configuration](configuration.md).
+The frontend defaults to `http://localhost:5173` and reaches the backend through the Vite dev proxy — `/ws` and `/health` are forwarded to `http://localhost:4000`, so dev uses exactly the same same-origin URLs as production. Point the proxy elsewhere with `NETDASH_DEV_BACKEND`, or override the socket URL entirely — see [Configuration](configuration.md).
 
 ## Build
 

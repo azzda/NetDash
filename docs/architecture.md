@@ -28,8 +28,8 @@ The contract layer. Nothing else imports from `frontend` or `backend` directly �
 
 A minimal Express + `ws` server that seeds a deterministic mock graph and broadcasts live updates.
 
-- `src/index.ts` — HTTP server, `/health` endpoint, attaches WebSocket server
-- `src/websocket/server.ts` — WebSocket server, connection handling, ping/pong keepalive, mock update loop (1600 ms)
+- `src/index.ts` — HTTP server, `/health` + `/readyz`, SPA fallback (production), attaches the WebSocket server on the **same port** at `/ws`
+- `src/websocket/server.ts` — WebSocket server (attached to the HTTP server or standalone), origin verification on upgrade, ping/pong keepalive, mock update loop (1600 ms)
 - `src/mock/seededGraph.ts` — deterministic LCG RNG, 11 nodes, 10 fully-enriched edges
 
 ### `@netdash/frontend`
@@ -68,12 +68,15 @@ src/
 
 ```
 Backend (mock seeder)
-  └─► WebSocket broadcast (1600ms)
+  └─► WebSocket broadcast (1600ms) on ws(s)://<same origin>/ws
         └─► wsClient.ts (validates via Zod, fires onMessage / onStatusChange)
               └─► useNetDashStore.applyMessage()
                     ├─► nodes[] / edges[] updated
                     └─► React renders NetDashCanvas + detail panels
 ```
+
+The WebSocket shares the HTTP server's port and origin, so a single Ingress
+host (or Vite dev proxy) covers the whole app — see [Deployment](deployment.md).
 
 ### Message types
 

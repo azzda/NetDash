@@ -1,6 +1,8 @@
-import { WebSocketServer } from "ws";
+import type { Server as HttpServer } from "node:http";
+import { WebSocketServer, type WebSocket } from "ws";
 import {
   NETDASH_PROTOCOL_VERSION,
+  parseAllowedOrigins,
   wsMessageSchema,
   type FlowMetricUpdatePayload,
   type NetDashWsMessage,
@@ -14,7 +16,32 @@ interface Sequences {
   edge: Record<string, number>;
 }
 
-export function attachWebSocketServer(port: number): WebSocketServer {
+export interface WebSocketServerOptions {
+  /** Attach to an existing HTTP server (single-origin mode — preferred). */
+  server?: HttpServer;
+  /** Path the WebSocket is served on when attached to an HTTP server. */
+  path?: string;
+  /** Standalone listener port (legacy / dev convenience). */
+  port?: number;
+  /** `*` or a comma-separated origin allowlist enforced on upgrade. */
+  allowedOrigin?: string;
+}
+
+/**
+ * Rejects browser upgrades from origins outside the allowlist. Requests without an
+ * `Origin` header (CLI clients, future collector agents) are not browser-initiated
+ * and are left to transport-level auth instead.
+ */
+function createOriginGuard(allowedOrigin: string | undefined) {
+  const allowlist = parseAllowedOrigins(allowedOrigin ?? "*");
+  if (allowlist === "*") {
+    return undefined;
+  }
+
+  return (info: { origin: string }) => !info.origin || allowlist.includes(info.origin);
+}
+
+export function attachWebSocketServer(options: WebSocketServerOptions): WebSocketServer {
   const snapshot = createSeededSnapshot(42);
   const sequences: Sequences = { node: {}, edge: {} };
 
@@ -26,9 +53,12 @@ export function attachWebSocketServer(port: number): WebSocketServer {
     sequences.edge[edge.id] = snapshot.sequence;
   }
 
-  const wss = new WebSocketServer({ port });
+  const verifyClient = createOriginGuard(options.allowedOrigin);
+  const wss = options.server
+    ? new WebSocketServer({ server: options.server, path: options.path ?? "/ws", verifyClient })
+    : new WebSocketServer({ port: options.port, verifyClient });
 
-  wss.on("connection", (socket) => {
+  wss.on("connection", (socket: WebSocket) => {
     let isAlive = true;
     socket.on("pong", () => {
       isAlive = true;

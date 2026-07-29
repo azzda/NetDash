@@ -46,8 +46,14 @@ function createManifestCode(rootDir: string) {
     packageManager: rootPackage.packageManager ?? "unknown",
     packages: [
       { name: rootPackage.name ?? "netdash", version: rootPackage.version ?? "0.0.0" },
-      { name: frontendPackage.name ?? "@netdash/frontend", version: frontendPackage.version ?? "0.0.0" },
-      { name: backendPackage.name ?? "@netdash/backend", version: backendPackage.version ?? "0.0.0" },
+      {
+        name: frontendPackage.name ?? "@netdash/frontend",
+        version: frontendPackage.version ?? "0.0.0",
+      },
+      {
+        name: backendPackage.name ?? "@netdash/backend",
+        version: backendPackage.version ?? "0.0.0",
+      },
       { name: sharedPackage.name ?? "@netdash/shared", version: sharedPackage.version ?? "0.0.0" },
     ],
     dependencyGroups: [
@@ -91,7 +97,16 @@ function netdashManifestPlugin() {
       }
       return null;
     },
-    handleHotUpdate(ctx: { file: string; server: { moduleGraph: { getModuleById: (id: string) => unknown; invalidateModule: (module: unknown) => void }; ws: { send: (payload: { type: string; path?: string }) => void } } }) {
+    handleHotUpdate(ctx: {
+      file: string;
+      server: {
+        moduleGraph: {
+          getModuleById: (id: string) => unknown;
+          invalidateModule: (module: unknown) => void;
+        };
+        ws: { send: (payload: { type: string; path?: string }) => void };
+      };
+    }) {
       if (!ctx.file.endsWith("package.json")) {
         return;
       }
@@ -109,5 +124,18 @@ export default defineConfig({
   plugins: [react(), netdashManifestPlugin()],
   server: {
     port: 5173,
+    // Dev mirrors production: the app always talks to a same-origin `/ws` and
+    // `/health`, so there is no separate dev-only WebSocket URL to configure.
+    proxy: {
+      "/ws": {
+        target: process.env.NETDASH_DEV_BACKEND ?? "http://localhost:4000",
+        ws: true,
+        changeOrigin: false,
+      },
+      "/health": {
+        target: process.env.NETDASH_DEV_BACKEND ?? "http://localhost:4000",
+        changeOrigin: false,
+      },
+    },
   },
 });

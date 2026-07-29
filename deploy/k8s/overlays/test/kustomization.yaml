@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# TEST environment — auto-deployed. CI rewrites `newTag` below on every green
+# push to main, Argo CD syncs it. Never edit newTag by hand.
+namespace: netdash-test
+
+resources:
+  - ../../base
+
+images:
+  - name: ghcr.io/azzda/netdash
+    newTag: latest
+
+configMapGenerator:
+  - name: netdash-env
+    literals:
+      - NODE_ENV=production
+      - NETDASH_HTTP_PORT=4000
+      - NETDASH_WS_PATH=/ws
+      - NETDASH_ALLOWED_ORIGIN=https://netdash-test.lab.azzda.cloud
+
+patches:
+  - target:
+      kind: Ingress
+      name: netdash
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: netdash-test.lab.azzda.cloud
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: netdash-test.lab.azzda.cloud

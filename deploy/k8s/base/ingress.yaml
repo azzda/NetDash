@@ -1,0 +1,26 @@
+# Host + TLS secret are replaced per environment by the overlays.
+# Traefik proxies the same-origin `/ws` upgrade on this one route — no second
+# port and no second hostname to publish.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netdash
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: netdash.example.invalid
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: netdash
+                port:
+                  number: 80
+  tls:
+    - secretName: wildcard-lab-azzda-cloud-tls
+      hosts:
+        - netdash.example.invalid
