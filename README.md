@@ -40,6 +40,7 @@ Container: `docker compose up --build` → `http://localhost:4000`
 
 ## Current features
 
+- Live topology from **NetBox** (devices, VMs, interfaces, cables, VLANs, IPs) or a deterministic mock — see [docs/data-sources.md](docs/data-sources.md)
 - React Flow canvas with automatic Dagre DAG layout (LR)
 - Three node types: Hardware, Host, Service
 - Three traffic modes: Off, Combined, Bidirectional

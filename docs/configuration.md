@@ -26,6 +26,11 @@ VITE_NETDASH_WS_URL=ws://192.168.1.10:4000/ws
 | `NETDASH_WS_PATH` | `/ws` | Path the WebSocket is served on, same port as HTTP |
 | `NETDASH_WS_PORT` | `0` | Legacy standalone WebSocket listener; `0` disables it |
 | `NETDASH_ALLOWED_ORIGIN` | `http://localhost:5173` | `*` or a comma-separated allowlist; enforced for CORS **and** WebSocket upgrades |
+| `NETDASH_SOURCE` | `mock` | Topology source: `mock` or `netbox` — see [Data Sources](data-sources.md) |
+| `NETDASH_REFRESH_INTERVAL_MS` | `60000` | How often a real source is re-read |
+| `NETBOX_URL` | *(unset)* | NetBox base URL (required when `NETDASH_SOURCE=netbox`) |
+| `NETBOX_TOKEN` | *(unset)* | Read-only NetBox 4.6 v2 token, `nbt_<key>.<secret>` |
+| `NETBOX_SITE` | *(unset)* | Optional NetBox site slug to restrict the topology to |
 | `NETDASH_VERSION` | `dev` | Reported by `/health` (set by the Docker build) |
 | `NETDASH_COMMIT` | `unknown` | Reported by `/health` (set by the Docker build) |
 | `NETDASH_BUILD_TIME` | `unknown` | Reported by `/health` (set by the Docker build) |

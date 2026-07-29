@@ -56,14 +56,16 @@
 
 ## Data & Integration
 
-- [ ] Provider interface (pluggable data sources, mock behind a feature flag)
-- [ ] NetBox adapter — topology, inventory, VLANs, cables (**seeded and ready**: 11 devices, 63 interfaces, 16 cables)
+- [x] Provider interface (pluggable data sources, mock behind `NETDASH_SOURCE`)
+- [x] **NetBox adapter** — devices, VMs, interfaces, cables, VLANs, IPs (**live**: 13 nodes, 19 edges from the real lab)
 - [ ] Prometheus adapter — node/service status and metrics
 - [ ] Loki adapter — real log panes
 - [ ] Hubble adapter — real flows on edges
 - [ ] Argo CD adapter — app health / sync state
 - [ ] Proxmox + TrueNAS adapters — capacity, power state, pools
 - [ ] Physical vs. service topology view split
+- [ ] Surface NetBox `extensions` (role, model, serial, site, tenant, real status) in the inspector
+- [ ] Render planned vs. connected links differently on the canvas
 - [ ] Persistent storage (SQLite / Postgres) for NetDash's own state
 - [ ] Historical data retention
 

@@ -26,10 +26,12 @@ The contract layer. Nothing else imports from `frontend` or `backend` directly �
 
 ### `@netdash/backend`
 
-A minimal Express + `ws` server that seeds a deterministic mock graph and broadcasts live updates.
+A minimal Express + `ws` server that serves the SPA and streams topology from a
+pluggable **provider** (see [Data Sources](data-sources.md)).
 
 - `src/index.ts` — HTTP server, `/health` + `/readyz`, SPA fallback (production), attaches the WebSocket server on the **same port** at `/ws`
-- `src/websocket/server.ts` — WebSocket server (attached to the HTTP server or standalone), origin verification on upgrade, ping/pong keepalive, mock update loop (1600 ms)
+- `src/websocket/server.ts` — WebSocket server, origin verification on upgrade, ping/pong keepalive, central snapshot refresh + broadcast
+- `src/providers/` — the `GraphProvider` seam: `mock.ts` (seeded fake lab) and `netbox/` (client, pure mapper, provider)
 - `src/mock/seededGraph.ts` — deterministic LCG RNG, 11 nodes, 10 fully-enriched edges
 
 ### `@netdash/frontend`
