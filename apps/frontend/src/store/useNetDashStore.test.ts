@@ -157,7 +157,14 @@ describe("useNetDashStore", () => {
       const msg: NetDashWsMessage = {
         protocolVersion: "1.0.0",
         type: "node.status.update",
-        payload: { nodeId: "n1", sequence: 2, status: "up", ip: "10.0.0.99", name: "renamed", ts: Date.now() },
+        payload: {
+          nodeId: "n1",
+          sequence: 2,
+          status: "up",
+          ip: "10.0.0.99",
+          name: "renamed",
+          ts: Date.now(),
+        },
         ts: Date.now(),
       };
       store.applyMessage(msg);

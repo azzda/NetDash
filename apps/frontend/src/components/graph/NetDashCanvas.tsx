@@ -91,7 +91,12 @@ interface SelectionFocusSyncProps {
   selectedEdgeId?: string;
 }
 
-function SelectionFocusSync({ nodes, edges, selectedNodeId, selectedEdgeId }: SelectionFocusSyncProps) {
+function SelectionFocusSync({
+  nodes,
+  edges,
+  selectedNodeId,
+  selectedEdgeId,
+}: SelectionFocusSyncProps) {
   const reactFlow = useReactFlow();
 
   useEffect(() => {
@@ -192,7 +197,9 @@ export function NetDashCanvas({
   onEdgeClick,
   onPaneClick,
 }: NetDashCanvasProps) {
-  const toFlowType = (assetType: NetDashNode["type"]): "hardwareNode" | "hostNode" | "serviceNode" => {
+  const toFlowType = (
+    assetType: NetDashNode["type"],
+  ): "hardwareNode" | "hostNode" | "serviceNode" => {
     if (assetType === "hardware") {
       return "hardwareNode";
     }

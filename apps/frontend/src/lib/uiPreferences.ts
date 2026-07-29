@@ -180,7 +180,10 @@ export function applyCustomPalette(palette: CustomPalette) {
   const secondaryAccent = mixHexColors(accent, "#22c55e", 0.35);
 
   const root = document.documentElement;
-  root.style.setProperty("--app-bg", `radial-gradient(circle at 18% 18%, ${mixHexColors(accent, "#ffffff", 0.12)} 0%, ${surface} 38%, ${mixHexColors(surface, "#020617", 0.5)} 100%)`);
+  root.style.setProperty(
+    "--app-bg",
+    `radial-gradient(circle at 18% 18%, ${mixHexColors(accent, "#ffffff", 0.12)} 0%, ${surface} 38%, ${mixHexColors(surface, "#020617", 0.5)} 100%)`,
+  );
   root.style.setProperty("--panel-bg", rgbaFromHex(surface, 0.82));
   root.style.setProperty("--panel-border", rgbaFromHex(text, 0.18));
   root.style.setProperty("--panel-shadow", "0 18px 44px rgba(2, 6, 23, 0.34)");

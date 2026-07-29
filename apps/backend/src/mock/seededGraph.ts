@@ -21,7 +21,10 @@ export function createSeededSnapshot(seed = 42): GraphSnapshotPayload {
   const rand = lcg(seed);
   const now = Date.now();
 
-  function buildMetrics(labelPrefix: string, profile: "hardware" | "host" | "service"): NodeMetricSeries[] {
+  function buildMetrics(
+    labelPrefix: string,
+    profile: "hardware" | "host" | "service",
+  ): NodeMetricSeries[] {
     const cpuBase = profile === "hardware" ? 38 : profile === "host" ? 54 : 32;
     const trafficBase = profile === "hardware" ? 420 : profile === "host" ? 180 : 70;
 
@@ -113,7 +116,11 @@ export function createSeededSnapshot(seed = 42): GraphSnapshotPayload {
     return details;
   }
 
-  function policy(id: string, type: ConnectorPolicyReference["type"], label: string): ConnectorPolicyReference {
+  function policy(
+    id: string,
+    type: ConnectorPolicyReference["type"],
+    label: string,
+  ): ConnectorPolicyReference {
     return { id, type, label };
   }
 
@@ -144,19 +151,12 @@ export function createSeededSnapshot(seed = 42): GraphSnapshotPayload {
         ip: "192.168.10.1",
         status: "up",
         assetType: "hardware",
-        details: detailsFor(
-          "gateway.lan",
-          undefined,
-          "unknown",
-          "connected",
-          "hardware",
-          [
-            "WireGuard peer sync completed for remote admin access.",
-            "WAN latency rose above baseline for 2 minutes.",
-            "Packet drop detected on uplink during ISP re-negotiation.",
-            "DHCP lease table refreshed for core VLANs.",
-          ],
-        ),
+        details: detailsFor("gateway.lan", undefined, "unknown", "connected", "hardware", [
+          "WireGuard peer sync completed for remote admin access.",
+          "WAN latency rose above baseline for 2 minutes.",
+          "Packet drop detected on uplink during ISP re-negotiation.",
+          "DHCP lease table refreshed for core VLANs.",
+        ]),
       },
       position: { x: 120, y: 140 },
     },
@@ -168,19 +168,12 @@ export function createSeededSnapshot(seed = 42): GraphSnapshotPayload {
         ip: "192.168.10.2",
         status: "up",
         assetType: "hardware",
-        details: detailsFor(
-          "crs309.core.lan",
-          undefined,
-          "unknown",
-          "unknown",
-          "hardware",
-          [
-            "Port 7 reached 10G burst during NAS backup window.",
-            "LLDP neighbor table updated for proxmox-dell and am5-nas.",
-            "SFP+ temperature exceeded preferred threshold briefly.",
-            "Bridge hardware offload remains enabled on all active trunks.",
-          ],
-        ),
+        details: detailsFor("crs309.core.lan", undefined, "unknown", "unknown", "hardware", [
+          "Port 7 reached 10G burst during NAS backup window.",
+          "LLDP neighbor table updated for proxmox-dell and am5-nas.",
+          "SFP+ temperature exceeded preferred threshold briefly.",
+          "Bridge hardware offload remains enabled on all active trunks.",
+        ]),
       },
       position: { x: 380, y: 100 },
     },
@@ -192,19 +185,12 @@ export function createSeededSnapshot(seed = 42): GraphSnapshotPayload {
         ip: "192.168.10.3",
         status: "up",
         assetType: "hardware",
-        details: detailsFor(
-          "crs310.fabric.lan",
-          undefined,
-          "unknown",
-          "unknown",
-          "hardware",
-          [
-            "10G uplink remains clean with no CRC errors.",
-            "Proxmox Dell trunk flapped once and recovered in 3 seconds.",
-            "MAC table pressure rose during backup traffic fan-out.",
-            "RSTP topology remains stable for downstream hosts.",
-          ],
-        ),
+        details: detailsFor("crs310.fabric.lan", undefined, "unknown", "unknown", "hardware", [
+          "10G uplink remains clean with no CRC errors.",
+          "Proxmox Dell trunk flapped once and recovered in 3 seconds.",
+          "MAC table pressure rose during backup traffic fan-out.",
+          "RSTP topology remains stable for downstream hosts.",
+        ]),
       },
       position: { x: 640, y: 180 },
     },
@@ -216,19 +202,12 @@ export function createSeededSnapshot(seed = 42): GraphSnapshotPayload {
         ip: "192.168.10.4",
         status: rand() > 0.04 ? "up" : "down",
         assetType: "hardware",
-        details: detailsFor(
-          "zyxel-poe.lan",
-          undefined,
-          "unknown",
-          "unknown",
-          "hardware",
-          [
-            "PoE budget at 42% with WiFi 7 AP as primary draw.",
-            "Guest SSID VLAN tagging validated on trunk uplink.",
-            "One copper port renegotiated to 1G after cable reseat.",
-            "AP roaming burst caused short multicast spike.",
-          ],
-        ),
+        details: detailsFor("zyxel-poe.lan", undefined, "unknown", "unknown", "hardware", [
+          "PoE budget at 42% with WiFi 7 AP as primary draw.",
+          "Guest SSID VLAN tagging validated on trunk uplink.",
+          "One copper port renegotiated to 1G after cable reseat.",
+          "AP roaming burst caused short multicast spike.",
+        ]),
       },
       position: { x: 720, y: 260 },
     },
@@ -240,19 +219,12 @@ export function createSeededSnapshot(seed = 42): GraphSnapshotPayload {
         ip: "192.168.10.5",
         status: "up",
         assetType: "hardware",
-        details: detailsFor(
-          "wifi7-ap.lan",
-          undefined,
-          "unknown",
-          "unknown",
-          "hardware",
-          [
-            "Client count peaked at 18 across primary and guest SSIDs.",
-            "6 GHz radio channel remained clear during last scan window.",
-            "Fast roaming handoff failed once for a mobile client.",
-            "PoE negotiation steady after overnight firmware update.",
-          ],
-        ),
+        details: detailsFor("wifi7-ap.lan", undefined, "unknown", "unknown", "hardware", [
+          "Client count peaked at 18 across primary and guest SSIDs.",
+          "6 GHz radio channel remained clear during last scan window.",
+          "Fast roaming handoff failed once for a mobile client.",
+          "PoE negotiation steady after overnight firmware update.",
+        ]),
       },
       position: { x: 860, y: 310 },
     },
@@ -264,19 +236,12 @@ export function createSeededSnapshot(seed = 42): GraphSnapshotPayload {
         ip: "192.168.20.10",
         status: rand() > 0.1 ? "up" : "down",
         assetType: "host",
-        details: detailsFor(
-          "pve-dell.lan",
-          "pve-dell.example.net",
-          "valid",
-          "connected",
-          "host",
-          [
-            "VM backup job for Nginx Proxy Manager completed in 4m 12s.",
-            "Storage latency warning triggered on local SSD datastore.",
-            "Kernel module update requires reboot window review.",
-            "QEMU guest agent heartbeat restored for rustdesk instance.",
-          ],
-        ),
+        details: detailsFor("pve-dell.lan", "pve-dell.example.net", "valid", "connected", "host", [
+          "VM backup job for Nginx Proxy Manager completed in 4m 12s.",
+          "Storage latency warning triggered on local SSD datastore.",
+          "Kernel module update requires reboot window review.",
+          "QEMU guest agent heartbeat restored for rustdesk instance.",
+        ]),
       },
       position: { x: 520, y: 320 },
     },
@@ -288,19 +253,12 @@ export function createSeededSnapshot(seed = 42): GraphSnapshotPayload {
         ip: "192.168.20.20",
         status: "up",
         assetType: "host",
-        details: detailsFor(
-          "am5-nas.lan",
-          "nas.example.net",
-          "valid",
-          "connected",
-          "host",
-          [
-            "ZFS scrub progress at 68% with no checksum errors.",
-            "Replication task to offsite target queued for 02:00.",
-            "SMB share auth retries increased for media workspace.",
-            "NAS cache hit rate steady above 92% during backup burst.",
-          ],
-        ),
+        details: detailsFor("am5-nas.lan", "nas.example.net", "valid", "connected", "host", [
+          "ZFS scrub progress at 68% with no checksum errors.",
+          "Replication task to offsite target queued for 02:00.",
+          "SMB share auth retries increased for media workspace.",
+          "NAS cache hit rate steady above 92% during backup burst.",
+        ]),
       },
       position: { x: 520, y: 80 },
     },
@@ -312,19 +270,12 @@ export function createSeededSnapshot(seed = 42): GraphSnapshotPayload {
         ip: "192.168.30.5",
         status: "up",
         assetType: "service",
-        details: detailsFor(
-          "pihole.internal",
-          undefined,
-          "unknown",
-          "unknown",
-          "service",
-          [
-            "Gravity update completed and 184 domains were added to blocklists.",
-            "DNS latency exceeded 35 ms for a short interval.",
-            "Upstream resolver timeout occurred on secondary path.",
-            "DoH fallback remained healthy after timeout recovery.",
-          ],
-        ),
+        details: detailsFor("pihole.internal", undefined, "unknown", "unknown", "service", [
+          "Gravity update completed and 184 domains were added to blocklists.",
+          "DNS latency exceeded 35 ms for a short interval.",
+          "Upstream resolver timeout occurred on secondary path.",
+          "DoH fallback remained healthy after timeout recovery.",
+        ]),
       },
       position: { x: 820, y: 120 },
     },
@@ -360,19 +311,12 @@ export function createSeededSnapshot(seed = 42): GraphSnapshotPayload {
         ip: "192.168.30.20",
         status: "up",
         assetType: "service",
-        details: detailsFor(
-          "homeassistant.internal",
-          undefined,
-          "unknown",
-          "unknown",
-          "service",
-          [
-            "Zigbee coordinator latency spiked during scene import.",
-            "Automation queue drained after power-monitor event burst.",
-            "Recorder database purge exceeded preferred runtime.",
-            "MQTT bridge heartbeat restored after broker reconnect.",
-          ],
-        ),
+        details: detailsFor("homeassistant.internal", undefined, "unknown", "unknown", "service", [
+          "Zigbee coordinator latency spiked during scene import.",
+          "Automation queue drained after power-monitor event burst.",
+          "Recorder database purge exceeded preferred runtime.",
+          "MQTT bridge heartbeat restored after broker reconnect.",
+        ]),
       },
       position: { x: 860, y: 40 },
     },

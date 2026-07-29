@@ -54,13 +54,15 @@ export default function App() {
   const [trafficMode, setTrafficMode] = useState<TrafficMode>(() =>
     readStoredPreference(storageKeys.trafficMode, "bidirectional"),
   );
-  const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>(() =>
-    readStoredPreference("netdash:workspace-mode", "topology") as WorkspaceMode,
+  const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>(
+    () => readStoredPreference("netdash:workspace-mode", "topology") as WorkspaceMode,
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [graphCompact, setGraphCompact] = useState(false);
-  const [wsStatus, setWsStatus] = useState<"connected" | "reconnecting" | "disconnected">("reconnecting");
+  const [wsStatus, setWsStatus] = useState<"connected" | "reconnecting" | "disconnected">(
+    "reconnecting",
+  );
   const [userProfile, setUserProfile] = useState(() =>
     readStoredJson("netdash:user-profile", {
       displayName: "Admin",
@@ -166,10 +168,7 @@ export default function App() {
     };
   }, []);
 
-  const upNodes = useMemo(
-    () => nodes.filter((node) => node.data.status === "up").length,
-    [nodes],
-  );
+  const upNodes = useMemo(() => nodes.filter((node) => node.data.status === "up").length, [nodes]);
 
   const selectedNode = useMemo(
     () => nodes.find((node) => node.identity.id === selectedNodeId),
@@ -225,7 +224,9 @@ export default function App() {
           edge.data?.sideB?.label,
           edge.data?.sideA?.interfaceLabel,
           edge.data?.sideB?.interfaceLabel,
-          ...(edge.data?.policyReferences?.map((reference) => `${reference.type} ${reference.label}`) ?? []),
+          ...(edge.data?.policyReferences?.map(
+            (reference) => `${reference.type} ${reference.label}`,
+          ) ?? []),
         ]
           .filter(Boolean)
           .join(" ")
@@ -264,7 +265,10 @@ export default function App() {
       { label: "Primary API", state: "healthy" },
       { label: "WebSocket broadcaster", state: lastError ? "degraded" : "healthy" },
       { label: "Primary database", state: "placeholder" },
-      { label: "Companion automations", state: selectedNode || selectedEdge ? "active context" : "standby" },
+      {
+        label: "Companion automations",
+        state: selectedNode || selectedEdge ? "active context" : "standby",
+      },
     ],
     [lastError, selectedEdge, selectedNode],
   );
@@ -368,7 +372,9 @@ export default function App() {
                     <div className="max-h-[22rem] overflow-y-auto">
                       {searchResults.nodes.length > 0 ? (
                         <div className="mb-2">
-                          <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-dimmed">Assets</p>
+                          <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-dimmed">
+                            Assets
+                          </p>
                           {searchResults.nodes.map((result) => (
                             <button
                               key={`search-node-${result.id}`}
@@ -377,10 +383,16 @@ export default function App() {
                               className="flex w-full items-start justify-between gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-white/5"
                             >
                               <span className="min-w-0">
-                                <span className="block truncate text-sm font-medium text-primary">{result.title}</span>
-                                <span className="mt-0.5 block truncate text-xs text-dimmed">{result.subtitle}</span>
+                                <span className="block truncate text-sm font-medium text-primary">
+                                  {result.title}
+                                </span>
+                                <span className="mt-0.5 block truncate text-xs text-dimmed">
+                                  {result.subtitle}
+                                </span>
                               </span>
-                              <span className="max-w-[10rem] truncate text-[11px] text-dimmed">{result.meta}</span>
+                              <span className="max-w-[10rem] truncate text-[11px] text-dimmed">
+                                {result.meta}
+                              </span>
                             </button>
                           ))}
                         </div>
@@ -388,7 +400,9 @@ export default function App() {
 
                       {searchResults.edges.length > 0 ? (
                         <div>
-                          <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-dimmed">Connectors</p>
+                          <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-dimmed">
+                            Connectors
+                          </p>
                           {searchResults.edges.map((result) => (
                             <button
                               key={`search-edge-${result.id}`}
@@ -397,17 +411,25 @@ export default function App() {
                               className="flex w-full items-start justify-between gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-white/5"
                             >
                               <span className="min-w-0">
-                                <span className="block truncate text-sm font-medium text-primary">{result.title}</span>
-                                <span className="mt-0.5 block truncate text-xs text-dimmed">{result.subtitle}</span>
+                                <span className="block truncate text-sm font-medium text-primary">
+                                  {result.title}
+                                </span>
+                                <span className="mt-0.5 block truncate text-xs text-dimmed">
+                                  {result.subtitle}
+                                </span>
                               </span>
-                              <span className="max-w-[10rem] truncate text-[11px] text-dimmed">{result.meta}</span>
+                              <span className="max-w-[10rem] truncate text-[11px] text-dimmed">
+                                {result.meta}
+                              </span>
                             </button>
                           ))}
                         </div>
                       ) : null}
 
                       {!hasSearchResults ? (
-                        <div className="px-2 py-3 text-sm text-dimmed">No matching assets or connectors.</div>
+                        <div className="px-2 py-3 text-sm text-dimmed">
+                          No matching assets or connectors.
+                        </div>
                       ) : null}
                     </div>
                   </div>
@@ -428,7 +450,9 @@ export default function App() {
                   className="header-overview-pill"
                 >
                   <span className="header-overview-pill__label">{item.label}</span>
-                  <span className={`header-overview-pill__value ${item.tone ?? ""}`}>{item.value}</span>
+                  <span className={`header-overview-pill__value ${item.tone ?? ""}`}>
+                    {item.value}
+                  </span>
                 </button>
               ))}
             </div>
@@ -458,14 +482,20 @@ export default function App() {
               className="button-subtle flex items-center gap-3 px-3 py-1.5 text-xs"
               title="Usage and pricing"
             >
-              <span className="font-semibold text-primary">{formatCurrency(latestUsageCost, currencyPreference)}</span>
-              <span className="text-dimmed">∅ {formatCurrency(averageUsageCost, currencyPreference)}</span>
+              <span className="font-semibold text-primary">
+                {formatCurrency(latestUsageCost, currencyPreference)}
+              </span>
+              <span className="text-dimmed">
+                ∅ {formatCurrency(averageUsageCost, currencyPreference)}
+              </span>
             </button>
             <div className="flex items-center gap-2 rounded-lg px-2 py-1">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-600 text-xs font-bold text-white">
                 {userProfile.displayName.slice(0, 1).toUpperCase()}
               </div>
-              <span className="hidden text-sm font-medium sm:inline">{userProfile.displayName}</span>
+              <span className="hidden text-sm font-medium sm:inline">
+                {userProfile.displayName}
+              </span>
             </div>
             <button
               type="button"
@@ -530,7 +560,8 @@ export default function App() {
                         <div className="min-w-0">
                           <h3 className="text-sm font-semibold text-primary">Node Inspector</h3>
                           <p className="mt-1 text-xs text-dimmed">
-                            Connector context now lives below the canvas to keep this rail dedicated to selected nodes.
+                            Connector context now lives below the canvas to keep this rail dedicated
+                            to selected nodes.
                           </p>
                         </div>
                       </div>
@@ -545,7 +576,11 @@ export default function App() {
                 ) : null}
               </div>
 
-              <SelectionObservabilityPane expanded={graphCompact} node={selectedNode} edge={selectedEdge} />
+              <SelectionObservabilityPane
+                expanded={graphCompact}
+                node={selectedNode}
+                edge={selectedEdge}
+              />
             </>
           ) : (
             <InventoryWorkspace
@@ -592,7 +627,11 @@ export default function App() {
         usageSeries={usageSeries}
         currencyPreference={currencyPreference}
       />
-      <AppInfoDrawer open={appInfoOpen} onClose={() => setAppInfoOpen(false)} statusRows={appStatusRows} />
+      <AppInfoDrawer
+        open={appInfoOpen}
+        onClose={() => setAppInfoOpen(false)}
+        statusRows={appStatusRows}
+      />
     </main>
   );
 }

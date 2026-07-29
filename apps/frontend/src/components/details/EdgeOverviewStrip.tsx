@@ -20,8 +20,12 @@ function EndpointSummaryCard({
     <article className="surface-subtle min-w-0 rounded-xl p-3">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-dimmed">{title}</p>
-          <h4 className="mt-1 truncate text-base font-semibold text-primary">{endpoint?.label ?? "Unmapped endpoint"}</h4>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-dimmed">
+            {title}
+          </p>
+          <h4 className="mt-1 truncate text-base font-semibold text-primary">
+            {endpoint?.label ?? "Unmapped endpoint"}
+          </h4>
         </div>
         <span className="max-w-[10rem] truncate rounded-full bg-white/5 px-2 py-1 text-[11px] text-dimmed">
           {endpoint?.interfaceLabel ?? "unknown iface"}
@@ -39,11 +43,15 @@ function EndpointSummaryCard({
         </div>
         <div>
           <dt className="text-[11px] uppercase tracking-[0.16em] text-dimmed">Physical Port</dt>
-          <dd className="mt-1 break-words font-medium text-primary">{endpoint?.physicalPort ?? "Not specified"}</dd>
+          <dd className="mt-1 break-words font-medium text-primary">
+            {endpoint?.physicalPort ?? "Not specified"}
+          </dd>
         </div>
         <div>
           <dt className="text-[11px] uppercase tracking-[0.16em] text-dimmed">Logical Port</dt>
-          <dd className="mt-1 break-words font-medium text-primary">{endpoint?.logicalPort ?? "Not specified"}</dd>
+          <dd className="mt-1 break-words font-medium text-primary">
+            {endpoint?.logicalPort ?? "Not specified"}
+          </dd>
         </div>
       </dl>
     </article>
@@ -62,9 +70,15 @@ export function EdgeOverviewStrip({ edge, densityPreference, onClose }: EdgeOver
     <section className={`surface-card min-w-0 overflow-hidden rounded-xl ${paddingClass}`}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-dimmed">Connector Overview</p>
-          <h3 className="mt-1 truncate text-lg font-semibold text-primary">{data?.displayName ?? "Connection"}</h3>
-          <p className="mt-1 break-all text-xs text-dimmed">UUID {data?.connectorUuid ?? edge.id}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-dimmed">
+            Connector Overview
+          </p>
+          <h3 className="mt-1 truncate text-lg font-semibold text-primary">
+            {data?.displayName ?? "Connection"}
+          </h3>
+          <p className="mt-1 break-all text-xs text-dimmed">
+            UUID {data?.connectorUuid ?? edge.id}
+          </p>
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -95,7 +109,9 @@ export function EdgeOverviewStrip({ edge, densityPreference, onClose }: EdgeOver
           <div className="mt-5 grid grid-cols-2 gap-2">
             <div className="rounded-xl bg-white/5 px-3 py-2">
               <p className="text-[11px] uppercase tracking-[0.16em] text-dimmed">Out</p>
-              <p className="mt-1 text-sm font-semibold text-primary">{trafficOut.toFixed(1)} Mbps</p>
+              <p className="mt-1 text-sm font-semibold text-primary">
+                {trafficOut.toFixed(1)} Mbps
+              </p>
             </div>
             <div className="rounded-xl bg-white/5 px-3 py-2">
               <p className="text-[11px] uppercase tracking-[0.16em] text-dimmed">In</p>
@@ -114,13 +130,20 @@ export function EdgeOverviewStrip({ edge, densityPreference, onClose }: EdgeOver
       <section className="mt-4 min-w-0 rounded-xl border border-white/10 bg-white/5 px-3 py-3">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-dimmed">Policy References</h4>
-            <p className="mt-1 text-xs text-dimmed">Attachment metadata stays here so the right-side inspector can stay node-focused.</p>
+            <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-dimmed">
+              Policy References
+            </h4>
+            <p className="mt-1 text-xs text-dimmed">
+              Attachment metadata stays here so the right-side inspector can stay node-focused.
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             {(data?.policyReferences ?? []).length > 0 ? (
               data?.policyReferences?.map((reference) => (
-                <span key={reference.id} className="rounded-full bg-white/10 px-2 py-1 text-[11px] font-medium text-primary">
+                <span
+                  key={reference.id}
+                  className="rounded-full bg-white/10 px-2 py-1 text-[11px] font-medium text-primary"
+                >
                   {reference.type}: {reference.label}
                 </span>
               ))

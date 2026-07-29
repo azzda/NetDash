@@ -171,9 +171,7 @@ describe("nodeDetailsUpdateMessageSchema", () => {
             points: [{ ts: 1, value: 45 }],
           },
         ],
-        logs: [
-          { id: "l1", ts: 1, severity: "info", source: "sys", message: "boot" },
-        ],
+        logs: [{ id: "l1", ts: 1, severity: "info", source: "sys", message: "boot" }],
       },
       ts: Date.now(),
     });
@@ -261,9 +259,7 @@ describe("wsMessageSchema (discriminated union)", () => {
               nodeId: "node-2",
               label: "Port 2",
             },
-            policyReferences: [
-              { id: "p1", type: "firewall", label: "Allow HTTP" },
-            ],
+            policyReferences: [{ id: "p1", type: "firewall", label: "Allow HTTP" }],
             trafficMbps: 50,
             packetsPerSec: 5000,
           },

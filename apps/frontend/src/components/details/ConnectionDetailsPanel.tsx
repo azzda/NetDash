@@ -8,7 +8,13 @@ interface ConnectionDetailsPanelProps {
   densityPreference: "compact" | "comfortable";
 }
 
-function EndpointColumn({ title, endpoint }: { title: string; endpoint?: ConnectorEndpointDetails }) {
+function EndpointColumn({
+  title,
+  endpoint,
+}: {
+  title: string;
+  endpoint?: ConnectorEndpointDetails;
+}) {
   const ipSummary = endpoint?.ipAddresses?.join(", ") ?? "unknown";
   const dnsSummary = endpoint?.dnsNames?.join(", ") ?? "unknown";
 
@@ -16,7 +22,9 @@ function EndpointColumn({ title, endpoint }: { title: string; endpoint?: Connect
     <article className="surface-subtle rounded-xl p-3">
       <div className="mb-3">
         <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-dimmed">{title}</h4>
-        <p className="mt-1 text-sm font-semibold text-primary">{endpoint?.label ?? "unmapped endpoint"}</p>
+        <p className="mt-1 text-sm font-semibold text-primary">
+          {endpoint?.label ?? "unmapped endpoint"}
+        </p>
       </div>
 
       <dl className="space-y-2 text-sm">
@@ -45,7 +53,12 @@ function EndpointColumn({ title, endpoint }: { title: string; endpoint?: Connect
   );
 }
 
-export function ConnectionDetailsPanel({ edge, open, onClose, densityPreference }: ConnectionDetailsPanelProps) {
+export function ConnectionDetailsPanel({
+  edge,
+  open,
+  onClose,
+  densityPreference,
+}: ConnectionDetailsPanelProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -63,20 +76,27 @@ export function ConnectionDetailsPanel({ edge, open, onClose, densityPreference 
 
   if (!edge) {
     return (
-      <aside className={`surface-card w-full max-w-sm rounded-xl ${paddingClass} lg:w-80 transition-all duration-200 ease-out ${animClass}`}>
+      <aside
+        className={`surface-card w-full max-w-sm rounded-xl ${paddingClass} lg:w-80 transition-all duration-200 ease-out ${animClass}`}
+      >
         <h3 className="text-sm font-semibold text-primary">Connection Inspector</h3>
         <p className="mt-1 text-xs text-dimmed">
-          Select a connector to inspect side A and side B metadata, interface details, and policy references.
+          Select a connector to inspect side A and side B metadata, interface details, and policy
+          references.
         </p>
       </aside>
     );
   }
 
   return (
-    <aside className={`surface-card w-full max-w-sm rounded-xl ${paddingClass} lg:w-80 transition-all duration-200 ease-out ${animClass}`}>
+    <aside
+      className={`surface-card w-full max-w-sm rounded-xl ${paddingClass} lg:w-80 transition-all duration-200 ease-out ${animClass}`}
+    >
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold text-primary">{data?.displayName ?? "Connection"}</h3>
+          <h3 className="text-lg font-semibold text-primary">
+            {data?.displayName ?? "Connection"}
+          </h3>
           <p className="text-xs text-dimmed">UUID {data?.connectorUuid ?? edge.id}</p>
         </div>
         <button type="button" onClick={onClose} className="button-subtle px-2 py-1 text-xs">
@@ -101,11 +121,16 @@ export function ConnectionDetailsPanel({ edge, open, onClose, densityPreference 
       </div>
 
       <section className="mt-3 surface-subtle rounded-xl p-3">
-        <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-dimmed">Policy References</h4>
+        <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-dimmed">
+          Policy References
+        </h4>
         <div className="mt-2 flex flex-wrap gap-2">
           {(data?.policyReferences ?? []).length > 0 ? (
             data?.policyReferences?.map((reference) => (
-              <span key={reference.id} className="rounded-full bg-white/5 px-2 py-1 text-[11px] font-medium text-primary">
+              <span
+                key={reference.id}
+                className="rounded-full bg-white/5 px-2 py-1 text-[11px] font-medium text-primary"
+              >
                 {reference.type}: {reference.label}
               </span>
             ))

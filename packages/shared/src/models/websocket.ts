@@ -1,9 +1,4 @@
-import type {
-  NetDashEdge,
-  NetDashNode,
-  NodeDetails,
-  NodeStatus,
-} from "./graph";
+import type { NetDashEdge, NetDashNode, NodeDetails, NodeStatus } from "./graph";
 
 export type WsEventType =
   | "graph.snapshot"

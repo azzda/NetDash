@@ -7,7 +7,11 @@ interface SelectionObservabilityPaneProps {
   expanded?: boolean;
 }
 
-export function SelectionObservabilityPane({ node, edge, expanded = false }: SelectionObservabilityPaneProps) {
+export function SelectionObservabilityPane({
+  node,
+  edge,
+  expanded = false,
+}: SelectionObservabilityPaneProps) {
   const activeTitle = node
     ? `${node.data.name} Observability`
     : edge?.data?.displayName
@@ -52,7 +56,8 @@ export function SelectionObservabilityPane({ node, edge, expanded = false }: Sel
         />
       ) : (
         <div className="surface-subtle rounded-xl p-4 text-sm text-dimmed">
-          Observability widgets will appear here once you select a node or connection in the topology.
+          Observability widgets will appear here once you select a node or connection in the
+          topology.
         </div>
       )}
     </section>

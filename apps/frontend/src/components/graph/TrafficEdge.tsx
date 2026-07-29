@@ -1,9 +1,4 @@
-import {
-  BaseEdge,
-  EdgeLabelRenderer,
-  getStraightPath,
-  type EdgeProps,
-} from "reactflow";
+import { BaseEdge, EdgeLabelRenderer, getStraightPath, type EdgeProps } from "reactflow";
 import type { TrafficMode } from "@netdash/shared";
 
 interface TrafficEdgeData {
@@ -64,9 +59,12 @@ export function TrafficEdge({
   });
 
   const mode = data?.trafficMode ?? "combined";
-  const combinedLabel = data?.trafficMbps !== undefined ? `${data.trafficMbps.toFixed(1)} Mbps` : undefined;
-  const bidirectionalOutLabel = data?.trafficOutMbps !== undefined ? `${data.trafficOutMbps.toFixed(1)} Mbps` : undefined;
-  const bidirectionalInLabel = data?.trafficInMbps !== undefined ? `${data.trafficInMbps.toFixed(1)} Mbps` : undefined;
+  const combinedLabel =
+    data?.trafficMbps !== undefined ? `${data.trafficMbps.toFixed(1)} Mbps` : undefined;
+  const bidirectionalOutLabel =
+    data?.trafficOutMbps !== undefined ? `${data.trafficOutMbps.toFixed(1)} Mbps` : undefined;
+  const bidirectionalInLabel =
+    data?.trafficInMbps !== undefined ? `${data.trafficInMbps.toFixed(1)} Mbps` : undefined;
   const stroke = selected ? "#38bdf8" : "var(--edge-stroke)";
   const mutedStroke = "var(--edge-stroke-muted)";
 
@@ -79,7 +77,11 @@ export function TrafficEdge({
       <>
         <BaseEdge id={id} path={straightPath} style={{ stroke, strokeWidth: 2.4 }} />
         <circle r="4" fill="var(--edge-activity)">
-          <animateMotion dur={animationDuration(data?.trafficMbps)} path={straightPath} repeatCount="indefinite" />
+          <animateMotion
+            dur={animationDuration(data?.trafficMbps)}
+            path={straightPath}
+            repeatCount="indefinite"
+          />
         </circle>
         {combinedLabel ? (
           <EdgeLabelRenderer>
@@ -109,10 +111,18 @@ export function TrafficEdge({
       <path d={forwardLane.drawPath} fill="none" stroke={stroke} strokeWidth="2.2" />
       <path d={reverseLane.drawPath} fill="none" stroke={mutedStroke} strokeWidth="2.2" />
       <circle r="3.7" fill="var(--edge-activity)">
-        <animateMotion dur={animationDuration(data?.trafficOutMbps)} path={forwardLane.drawPath} repeatCount="indefinite" />
+        <animateMotion
+          dur={animationDuration(data?.trafficOutMbps)}
+          path={forwardLane.drawPath}
+          repeatCount="indefinite"
+        />
       </circle>
       <circle r="3.7" fill="var(--edge-activity-secondary)">
-        <animateMotion dur={animationDuration(data?.trafficInMbps)} path={reverseLane.reversePath} repeatCount="indefinite" />
+        <animateMotion
+          dur={animationDuration(data?.trafficInMbps)}
+          path={reverseLane.reversePath}
+          repeatCount="indefinite"
+        />
       </circle>
       <EdgeLabelRenderer>
         {bidirectionalOutLabel ? (

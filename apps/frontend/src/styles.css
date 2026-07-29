@@ -162,7 +162,10 @@ body {
   font-weight: 600;
   line-height: 1;
   padding: 0.55rem 0.7rem;
-  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
 }
 
 .graph-toolbar__button:hover {
@@ -234,7 +237,12 @@ body {
   left: 1rem;
   right: 1rem;
   height: 2px;
-  background: linear-gradient(90deg, rgba(56, 189, 248, 0.24), rgba(52, 211, 153, 0.72), rgba(56, 189, 248, 0.24));
+  background: linear-gradient(
+    90deg,
+    rgba(56, 189, 248, 0.24),
+    rgba(52, 211, 153, 0.72),
+    rgba(56, 189, 248, 0.24)
+  );
   transform: translateY(-50%);
 }
 
@@ -279,7 +287,9 @@ body {
   font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 150ms ease, color 150ms ease;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
 }
 
 .observability-tab[data-active="true"],

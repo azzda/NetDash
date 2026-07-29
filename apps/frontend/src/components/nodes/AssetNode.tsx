@@ -7,7 +7,10 @@ const badgeByType: Record<AssetType, string> = {
   service: "bg-amber-100 text-amber-700",
 };
 
-function AssetNodeCard({ data, forcedType }: NodeProps<NetDashNodeData> & { forcedType: AssetType }) {
+function AssetNodeCard({
+  data,
+  forcedType,
+}: NodeProps<NetDashNodeData> & { forcedType: AssetType }) {
   const statusClass = data.status === "up" ? "bg-emerald-500" : "bg-rose-500";
   const type = forcedType;
 
@@ -19,7 +22,9 @@ function AssetNodeCard({ data, forcedType }: NodeProps<NetDashNodeData> & { forc
           <h4 className="truncate text-sm font-semibold text-primary">{data.name}</h4>
           <p className="truncate text-[11px] text-dimmed">{data.ip}</p>
         </div>
-        <span className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${badgeByType[type]}`}>
+        <span
+          className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${badgeByType[type]}`}
+        >
           {type}
         </span>
       </div>

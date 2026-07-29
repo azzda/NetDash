@@ -70,19 +70,21 @@ export function SettingsDrawer({
     onCurrencyChange(event.target.value as CurrencyPreference);
   };
 
-  const handlePaletteField = (field: keyof CustomPalette) => (event: ChangeEvent<HTMLInputElement>) => {
-    onCustomPaletteChange({
-      ...customPalette,
-      [field]: event.target.value,
-    });
-  };
+  const handlePaletteField =
+    (field: keyof CustomPalette) => (event: ChangeEvent<HTMLInputElement>) => {
+      onCustomPaletteChange({
+        ...customPalette,
+        [field]: event.target.value,
+      });
+    };
 
-  const handleProfileField = (field: "displayName" | "email") => (event: ChangeEvent<HTMLInputElement>) => {
-    onUserProfileChange({
-      ...userProfile,
-      [field]: event.target.value,
-    });
-  };
+  const handleProfileField =
+    (field: "displayName" | "email") => (event: ChangeEvent<HTMLInputElement>) => {
+      onUserProfileChange({
+        ...userProfile,
+        [field]: event.target.value,
+      });
+    };
 
   return (
     <div
@@ -127,11 +129,19 @@ export function SettingsDrawer({
           <div className="grid gap-3">
             <label className="block text-xs font-medium text-dimmed">
               Display name
-              <input value={userProfile.displayName} onChange={handleProfileField("displayName")} className="input-control mt-1 w-full px-3 py-2" />
+              <input
+                value={userProfile.displayName}
+                onChange={handleProfileField("displayName")}
+                className="input-control mt-1 w-full px-3 py-2"
+              />
             </label>
             <label className="block text-xs font-medium text-dimmed">
               Email
-              <input value={userProfile.email} onChange={handleProfileField("email")} className="input-control mt-1 w-full px-3 py-2" />
+              <input
+                value={userProfile.email}
+                onChange={handleProfileField("email")}
+                className="input-control mt-1 w-full px-3 py-2"
+              />
             </label>
           </div>
         </section>
@@ -145,7 +155,11 @@ export function SettingsDrawer({
           </div>
           <label className="block text-xs font-medium text-dimmed">
             Theme
-            <select value={themePreference} onChange={handleTheme} className="input-control mt-1 w-full">
+            <select
+              value={themePreference}
+              onChange={handleTheme}
+              className="input-control mt-1 w-full"
+            >
               <option value="dark">Dark</option>
               <option value="light">Light</option>
               <option value="custom">Custom</option>
@@ -153,14 +167,22 @@ export function SettingsDrawer({
           </label>
           <label className="block text-xs font-medium text-dimmed">
             Density
-            <select value={densityPreference} onChange={handleDensity} className="input-control mt-1 w-full">
+            <select
+              value={densityPreference}
+              onChange={handleDensity}
+              className="input-control mt-1 w-full"
+            >
               <option value="compact">Compact</option>
               <option value="comfortable">Comfortable</option>
             </select>
           </label>
           <label className="block text-xs font-medium text-dimmed">
             Currency
-            <select value={currencyPreference} onChange={handleCurrency} className="input-control mt-1 w-full">
+            <select
+              value={currencyPreference}
+              onChange={handleCurrency}
+              className="input-control mt-1 w-full"
+            >
               <option value="eur">EUR (€)</option>
               <option value="usd">USD ($)</option>
               <option value="jpy">JPY (¥)</option>
@@ -172,30 +194,52 @@ export function SettingsDrawer({
           <div>
             <h3 className="text-sm font-semibold">Custom Palette</h3>
             <p className="mt-1 text-xs text-dimmed">
-              Three editable tokens keep the theme small enough to control while still changing the app mood.
+              Three editable tokens keep the theme small enough to control while still changing the
+              app mood.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
             <label className="block text-xs font-medium text-dimmed">
               Accent
-              <input type="color" value={customPalette.accent} onChange={handlePaletteField("accent")} className="mt-2 h-10 w-full rounded-lg border border-white/10 bg-transparent" />
+              <input
+                type="color"
+                value={customPalette.accent}
+                onChange={handlePaletteField("accent")}
+                className="mt-2 h-10 w-full rounded-lg border border-white/10 bg-transparent"
+              />
             </label>
             <label className="block text-xs font-medium text-dimmed">
               Surface
-              <input type="color" value={customPalette.surface} onChange={handlePaletteField("surface")} className="mt-2 h-10 w-full rounded-lg border border-white/10 bg-transparent" />
+              <input
+                type="color"
+                value={customPalette.surface}
+                onChange={handlePaletteField("surface")}
+                className="mt-2 h-10 w-full rounded-lg border border-white/10 bg-transparent"
+              />
             </label>
             <label className="block text-xs font-medium text-dimmed">
               Text
-              <input type="color" value={customPalette.text} onChange={handlePaletteField("text")} className="mt-2 h-10 w-full rounded-lg border border-white/10 bg-transparent" />
+              <input
+                type="color"
+                value={customPalette.text}
+                onChange={handlePaletteField("text")}
+                className="mt-2 h-10 w-full rounded-lg border border-white/10 bg-transparent"
+              />
             </label>
           </div>
-          <div className="rounded-xl border border-white/10 p-3" style={{ background: customPalette.surface, color: customPalette.text }}>
+          <div
+            className="rounded-xl border border-white/10 p-3"
+            style={{ background: customPalette.surface, color: customPalette.text }}
+          >
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs uppercase tracking-[0.18em] opacity-70">Preview</p>
                 <p className="mt-1 text-sm font-semibold">Custom NetDash surface</p>
               </div>
-              <span className="rounded-full px-3 py-1 text-xs font-semibold" style={{ background: customPalette.accent, color: "#0b1320" }}>
+              <span
+                className="rounded-full px-3 py-1 text-xs font-semibold"
+                style={{ background: customPalette.accent, color: "#0b1320" }}
+              >
                 Accent
               </span>
             </div>
@@ -211,7 +255,11 @@ export function SettingsDrawer({
           </div>
           <label className="block text-xs font-medium text-dimmed">
             Traffic mode
-            <select value={trafficMode} onChange={handleTrafficMode} className="input-control mt-1 w-full">
+            <select
+              value={trafficMode}
+              onChange={handleTrafficMode}
+              className="input-control mt-1 w-full"
+            >
               <option value="off">Off</option>
               <option value="combined">Combined</option>
               <option value="bidirectional">Bidirectional</option>
@@ -227,8 +275,8 @@ export function SettingsDrawer({
         <section className="surface-card mt-4 space-y-2 p-3 text-xs text-dimmed">
           <h3 className="text-sm font-semibold text-primary">Asset Management Direction</h3>
           <p>
-            NetDash should treat graph nodes as visual projections of richer asset records. The next data layer
-            should focus on inventory, tags, ownership, lifecycle, and relationships.
+            NetDash should treat graph nodes as visual projections of richer asset records. The next
+            data layer should focus on inventory, tags, ownership, lifecycle, and relationships.
           </p>
         </section>
       </aside>

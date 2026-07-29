@@ -42,7 +42,8 @@ function buildEdgeSearchText(edge: NetDashEdge) {
     edge.data?.sideB?.label,
     edge.data?.sideA?.interfaceLabel,
     edge.data?.sideB?.interfaceLabel,
-    ...(edge.data?.policyReferences?.map((reference) => `${reference.type} ${reference.label}`) ?? []),
+    ...(edge.data?.policyReferences?.map((reference) => `${reference.type} ${reference.label}`) ??
+      []),
   ]
     .filter(Boolean)
     .join(" ")
@@ -94,10 +95,16 @@ export function InventoryWorkspace({
       <section className="surface-card rounded-xl p-3">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-dimmed">Inventory Workspace</p>
-            <h2 className="mt-1 text-lg font-semibold text-primary">Metadata-ready asset and connector table</h2>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-dimmed">
+              Inventory Workspace
+            </p>
+            <h2 className="mt-1 text-lg font-semibold text-primary">
+              Metadata-ready asset and connector table
+            </h2>
             <p className="mt-1 max-w-3xl text-sm text-dimmed">
-              This is the first implementation step for bulk metadata workflows. Use it to browse, filter, and jump into topology context without forcing heavy edits into the graph itself.
+              This is the first implementation step for bulk metadata workflows. Use it to browse,
+              filter, and jump into topology context without forcing heavy edits into the graph
+              itself.
             </p>
           </div>
 
@@ -138,7 +145,11 @@ export function InventoryWorkspace({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             className="input-control w-full px-3 py-2 text-sm lg:max-w-md"
-            placeholder={activeTab === "assets" ? "Search assets, IPs, DNS, VPN, cert status" : "Search connectors, UUIDs, protocol, VLAN, policies"}
+            placeholder={
+              activeTab === "assets"
+                ? "Search assets, IPs, DNS, VPN, cert status"
+                : "Search connectors, UUIDs, protocol, VLAN, policies"
+            }
           />
         </div>
       </section>
@@ -178,12 +189,18 @@ export function InventoryWorkspace({
                         <td className="px-3 py-2 text-primary">{node.data.ip}</td>
                         <td className="px-3 py-2 text-dimmed">{node.type}</td>
                         <td className="px-3 py-2">
-                          <span className={`rounded-full px-2 py-1 text-[11px] font-medium ${node.data.status === "up" ? "bg-emerald-500/15 text-emerald-200" : "bg-rose-500/15 text-rose-200"}`}>
+                          <span
+                            className={`rounded-full px-2 py-1 text-[11px] font-medium ${node.data.status === "up" ? "bg-emerald-500/15 text-emerald-200" : "bg-rose-500/15 text-rose-200"}`}
+                          >
                             {node.data.status}
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-dimmed">{node.data.details?.localDns ?? "unknown"}</td>
-                        <td className="px-3 py-2 text-dimmed">{node.data.details?.vpnStatus ?? "unknown"}</td>
+                        <td className="px-3 py-2 text-dimmed">
+                          {node.data.details?.localDns ?? "unknown"}
+                        </td>
+                        <td className="px-3 py-2 text-dimmed">
+                          {node.data.details?.vpnStatus ?? "unknown"}
+                        </td>
                       </tr>
                     );
                   })}
@@ -214,17 +231,28 @@ export function InventoryWorkspace({
                       >
                         <td className="px-3 py-2">
                           <div className="min-w-0">
-                            <p className="truncate font-semibold text-primary">{edge.data?.displayName ?? "Connection"}</p>
-                            <p className="truncate text-xs text-dimmed">{edge.data?.connectorUuid ?? edge.id}</p>
+                            <p className="truncate font-semibold text-primary">
+                              {edge.data?.displayName ?? "Connection"}
+                            </p>
+                            <p className="truncate text-xs text-dimmed">
+                              {edge.data?.connectorUuid ?? edge.id}
+                            </p>
                           </div>
                         </td>
                         <td className="px-3 py-2 text-dimmed">{edge.data?.protocol ?? "mixed"}</td>
-                        <td className="px-3 py-2 text-dimmed">{edge.data?.vlan ?? "shared fabric"}</td>
-                        <td className="px-3 py-2 text-primary">{edge.data?.trafficMbps?.toFixed(1) ?? "0.0"} Mbps</td>
                         <td className="px-3 py-2 text-dimmed">
-                          {(edge.data?.sideA?.label ?? "Side A")} → {(edge.data?.sideB?.label ?? "Side B")}
+                          {edge.data?.vlan ?? "shared fabric"}
                         </td>
-                        <td className="px-3 py-2 text-dimmed">{edge.data?.policyReferences?.length ?? 0}</td>
+                        <td className="px-3 py-2 text-primary">
+                          {edge.data?.trafficMbps?.toFixed(1) ?? "0.0"} Mbps
+                        </td>
+                        <td className="px-3 py-2 text-dimmed">
+                          {edge.data?.sideA?.label ?? "Side A"} →{" "}
+                          {edge.data?.sideB?.label ?? "Side B"}
+                        </td>
+                        <td className="px-3 py-2 text-dimmed">
+                          {edge.data?.policyReferences?.length ?? 0}
+                        </td>
                       </tr>
                     );
                   })}
@@ -243,15 +271,21 @@ export function InventoryWorkspace({
         <aside className="surface-card rounded-xl p-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-dimmed">Selected Record</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-dimmed">
+                Selected Record
+              </p>
               <h3 className="mt-1 truncate text-base font-semibold text-primary">
                 {activeTab === "assets"
-                  ? selectedNode?.data.name ?? "No asset selected"
-                  : selectedEdge?.data?.displayName ?? "No connector selected"}
+                  ? (selectedNode?.data.name ?? "No asset selected")
+                  : (selectedEdge?.data?.displayName ?? "No connector selected")}
               </h3>
             </div>
             {activeRecord ? (
-              <button type="button" onClick={onOpenTopology} className="button-subtle shrink-0 px-2 py-1 text-xs">
+              <button
+                type="button"
+                onClick={onOpenTopology}
+                className="button-subtle shrink-0 px-2 py-1 text-xs"
+              >
                 Open in topology
               </button>
             ) : null}
@@ -262,7 +296,9 @@ export function InventoryWorkspace({
               <dl className="mt-4 space-y-3 text-sm">
                 <div>
                   <dt className="text-dimmed">Key</dt>
-                  <dd className="break-all font-medium text-primary">{selectedNode.identity.key}</dd>
+                  <dd className="break-all font-medium text-primary">
+                    {selectedNode.identity.key}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-dimmed">IP</dt>
@@ -270,19 +306,27 @@ export function InventoryWorkspace({
                 </div>
                 <div>
                   <dt className="text-dimmed">Local DNS</dt>
-                  <dd className="break-words font-medium text-primary">{selectedNode.data.details?.localDns ?? "unknown"}</dd>
+                  <dd className="break-words font-medium text-primary">
+                    {selectedNode.data.details?.localDns ?? "unknown"}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-dimmed">Public DNS</dt>
-                  <dd className="break-words font-medium text-primary">{selectedNode.data.details?.publicDns ?? "unknown"}</dd>
+                  <dd className="break-words font-medium text-primary">
+                    {selectedNode.data.details?.publicDns ?? "unknown"}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-dimmed">Certificate</dt>
-                  <dd className="font-medium text-primary">{selectedNode.data.details?.certStatus ?? "unknown"}</dd>
+                  <dd className="font-medium text-primary">
+                    {selectedNode.data.details?.certStatus ?? "unknown"}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-dimmed">VPN</dt>
-                  <dd className="font-medium text-primary">{selectedNode.data.details?.vpnStatus ?? "unknown"}</dd>
+                  <dd className="font-medium text-primary">
+                    {selectedNode.data.details?.vpnStatus ?? "unknown"}
+                  </dd>
                 </div>
               </dl>
             ) : (
@@ -294,34 +338,46 @@ export function InventoryWorkspace({
             <dl className="mt-4 space-y-3 text-sm">
               <div>
                 <dt className="text-dimmed">Connector UUID</dt>
-                <dd className="break-all font-medium text-primary">{selectedEdge.data?.connectorUuid ?? selectedEdge.id}</dd>
+                <dd className="break-all font-medium text-primary">
+                  {selectedEdge.data?.connectorUuid ?? selectedEdge.id}
+                </dd>
               </div>
               <div>
                 <dt className="text-dimmed">Protocol</dt>
-                <dd className="font-medium text-primary">{selectedEdge.data?.protocol ?? "mixed"}</dd>
+                <dd className="font-medium text-primary">
+                  {selectedEdge.data?.protocol ?? "mixed"}
+                </dd>
               </div>
               <div>
                 <dt className="text-dimmed">VLAN</dt>
-                <dd className="font-medium text-primary">{selectedEdge.data?.vlan ?? "shared fabric"}</dd>
+                <dd className="font-medium text-primary">
+                  {selectedEdge.data?.vlan ?? "shared fabric"}
+                </dd>
               </div>
               <div>
                 <dt className="text-dimmed">Endpoints</dt>
                 <dd className="break-words font-medium text-primary">
-                  {(selectedEdge.data?.sideA?.label ?? "Side A")} → {(selectedEdge.data?.sideB?.label ?? "Side B")}
+                  {selectedEdge.data?.sideA?.label ?? "Side A"} →{" "}
+                  {selectedEdge.data?.sideB?.label ?? "Side B"}
                 </dd>
               </div>
               <div>
                 <dt className="text-dimmed">Bandwidth</dt>
-                <dd className="font-medium text-primary">{selectedEdge.data?.trafficMbps?.toFixed(1) ?? "0.0"} Mbps</dd>
+                <dd className="font-medium text-primary">
+                  {selectedEdge.data?.trafficMbps?.toFixed(1) ?? "0.0"} Mbps
+                </dd>
               </div>
               <div>
                 <dt className="text-dimmed">Policy References</dt>
-                <dd className="font-medium text-primary">{selectedEdge.data?.policyReferences?.length ?? 0}</dd>
+                <dd className="font-medium text-primary">
+                  {selectedEdge.data?.policyReferences?.length ?? 0}
+                </dd>
               </div>
             </dl>
           ) : (
             <div className="surface-subtle mt-4 rounded-xl p-4 text-sm text-dimmed">
-              Select a connector row to inspect metadata here before bulk edit and policy summary actions land.
+              Select a connector row to inspect metadata here before bulk edit and policy summary
+              actions land.
             </div>
           )}
         </aside>

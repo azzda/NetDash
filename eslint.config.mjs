@@ -7,13 +7,7 @@ import prettierConfig from "eslint-config-prettier";
 export default tseslint.config(
   // Global ignores
   {
-    ignores: [
-      "**/node_modules/**",
-      "**/dist/**",
-      "docs/**",
-      "pnpm-lock.yaml",
-      "**/*.config.js",
-    ],
+    ignores: ["**/node_modules/**", "**/dist/**", "docs/**", "pnpm-lock.yaml", "**/*.config.js"],
   },
 
   // Base JS rules
@@ -34,10 +28,7 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": [
-        "warn",
-        { allowConstantExport: true },
-      ],
+      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
     },
   },
 

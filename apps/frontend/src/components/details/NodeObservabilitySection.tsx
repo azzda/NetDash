@@ -62,8 +62,8 @@ function filterSeries(points: NodeMetricPoint[], range: TimeRange) {
 }
 
 function normalizeRatios(count: number, ratios: number[], min = 0.18) {
-  const seeded = Array.from({ length: count }, (_, index) => ratios[index] ?? 1 / count).map((value) =>
-    Math.max(min, value),
+  const seeded = Array.from({ length: count }, (_, index) => ratios[index] ?? 1 / count).map(
+    (value) => Math.max(min, value),
   );
   const total = seeded.reduce((sum, value) => sum + value, 0);
   return seeded.map((value) => value / total);
@@ -111,7 +111,12 @@ interface ResizablePaneLayoutProps {
   children: ReactNode[];
 }
 
-function ResizablePaneLayout({ count, ratios, onRatiosChange, children }: ResizablePaneLayoutProps) {
+function ResizablePaneLayout({
+  count,
+  ratios,
+  onRatiosChange,
+  children,
+}: ResizablePaneLayoutProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const normalizedRatios = normalizeRatios(count, ratios);
   const panels = children.slice(0, count);
@@ -191,7 +196,9 @@ interface MiniMetricChartProps {
 }
 
 function MiniMetricChart({ series, range, expanded = false }: MiniMetricChartProps) {
-  const [hoveredPoint, setHoveredPoint] = useState<(NodeMetricPoint & { x: number; y: number }) | null>(null);
+  const [hoveredPoint, setHoveredPoint] = useState<
+    (NodeMetricPoint & { x: number; y: number }) | null
+  >(null);
   const filteredPoints = useMemo(() => filterSeries(series.points, range), [range, series.points]);
 
   if (filteredPoints.length === 0) {
@@ -248,7 +255,10 @@ function MiniMetricChart({ series, range, expanded = false }: MiniMetricChartPro
         </div>
       ) : null}
 
-      <svg viewBox={`0 0 ${width} ${height}`} className={`mt-3 w-full overflow-visible ${expanded ? "h-44" : "h-32"}`}>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className={`mt-3 w-full overflow-visible ${expanded ? "h-44" : "h-32"}`}
+      >
         <path
           d={path}
           fill="none"
@@ -377,14 +387,20 @@ export function NodeObservabilitySection({
 
   const graphPanels = Array.from({ length: graphPanelCount }, (_, index) => {
     const selectedId = resolvedMetricSelections[index];
-    const selectedSeries = metrics.find((series) => series.id === selectedId) ?? metrics[index] ?? metrics[0];
+    const selectedSeries =
+      metrics.find((series) => series.id === selectedId) ?? metrics[index] ?? metrics[0];
 
     return (
-      <article key={`graph-panel-${index}`} className="surface-subtle flex h-full min-w-0 flex-col rounded-xl p-3">
+      <article
+        key={`graph-panel-${index}`}
+        className="surface-subtle flex h-full min-w-0 flex-col rounded-xl p-3"
+      >
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-0">
             <p className="text-[11px] uppercase tracking-[0.18em] text-dimmed">Graph {index + 1}</p>
-            <p className="mt-1 text-xs text-dimmed">Resize handles let you compact this row without losing context.</p>
+            <p className="mt-1 text-xs text-dimmed">
+              Resize handles let you compact this row without losing context.
+            </p>
           </div>
           <select
             value={selectedSeries?.id ?? ""}
@@ -461,7 +477,9 @@ export function NodeObservabilitySection({
           <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <h4 className="text-xs font-semibold text-primary">Metric Graph Workspace</h4>
-              <p className="mt-1 text-[11px] text-dimmed">Up to three horizontally resizable graph panes.</p>
+              <p className="mt-1 text-[11px] text-dimmed">
+                Up to three horizontally resizable graph panes.
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] uppercase tracking-[0.16em] text-dimmed">Panels</span>
@@ -485,7 +503,11 @@ export function NodeObservabilitySection({
           </div>
 
           {metrics.length > 0 ? (
-            <ResizablePaneLayout count={graphPanelCount} ratios={graphRatios} onRatiosChange={setGraphRatios}>
+            <ResizablePaneLayout
+              count={graphPanelCount}
+              ratios={graphRatios}
+              onRatiosChange={setGraphRatios}
+            >
               {graphPanels}
             </ResizablePaneLayout>
           ) : (
@@ -499,7 +521,9 @@ export function NodeObservabilitySection({
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <h4 className="text-xs font-semibold text-primary">Log Workspace</h4>
-              <p className="mt-1 text-[11px] text-dimmed">Text-first stream view with ANSI color rendering and compact filters.</p>
+              <p className="mt-1 text-[11px] text-dimmed">
+                Text-first stream view with ANSI color rendering and compact filters.
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] uppercase tracking-[0.16em] text-dimmed">Columns</span>
@@ -530,10 +554,14 @@ export function NodeObservabilitySection({
               placeholder="Search logs, source, or severity"
             />
             <div className="flex items-center gap-2 lg:w-auto">
-              <label className="text-[11px] uppercase tracking-[0.16em] text-dimmed">Severity</label>
+              <label className="text-[11px] uppercase tracking-[0.16em] text-dimmed">
+                Severity
+              </label>
               <select
                 value={severityFilter}
-                onChange={(event) => setSeverityFilter(event.target.value as "all" | "error" | "warn" | "info")}
+                onChange={(event) =>
+                  setSeverityFilter(event.target.value as "all" | "error" | "warn" | "info")
+                }
                 className="input-control px-2 py-2 text-xs"
               >
                 {(["all", "error", "warn", "info"] as const).map((option) => (
@@ -546,26 +574,44 @@ export function NodeObservabilitySection({
           </div>
 
           <div className="mt-3">
-            <ResizablePaneLayout count={logPanelCount} ratios={logRatios} onRatiosChange={setLogRatios}>
+            <ResizablePaneLayout
+              count={logPanelCount}
+              ratios={logRatios}
+              onRatiosChange={setLogRatios}
+            >
               {logColumns.map((column, index) => (
-                <article key={`log-panel-${index}`} className="min-w-0 rounded-xl border border-white/10 bg-[#020617]/20 p-3">
+                <article
+                  key={`log-panel-${index}`}
+                  className="min-w-0 rounded-xl border border-white/10 bg-[#020617]/20 p-3"
+                >
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <div>
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-dimmed">Log Box {index + 1}</p>
-                      <p className="mt-1 text-[11px] text-dimmed">{column.length} entries visible</p>
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-dimmed">
+                        Log Box {index + 1}
+                      </p>
+                      <p className="mt-1 text-[11px] text-dimmed">
+                        {column.length} entries visible
+                      </p>
                     </div>
                     <span className="rounded-full bg-white/5 px-2 py-1 text-[11px] text-dimmed">
                       {Math.min(visibleLogs.length, expanded ? 80 : 36)} / {logs.length}
                     </span>
                   </div>
 
-                  <div className={`space-y-2 overflow-y-auto pr-1 ${expanded ? "max-h-[34rem]" : "max-h-[24rem]"}`}>
+                  <div
+                    className={`space-y-2 overflow-y-auto pr-1 ${expanded ? "max-h-[34rem]" : "max-h-[24rem]"}`}
+                  >
                     {column.length > 0 ? (
                       column.map((entry) => (
-                        <div key={entry.id} className={`log-stream-row ${severityTone(entry.severity)}`}>
+                        <div
+                          key={entry.id}
+                          className={`log-stream-row ${severityTone(entry.severity)}`}
+                        >
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-dimmed">
                             <span>{formatRange(entry.ts)}</span>
-                            <span className="font-semibold uppercase tracking-[0.16em]">{entry.severity}</span>
+                            <span className="font-semibold uppercase tracking-[0.16em]">
+                              {entry.severity}
+                            </span>
                             <span>{entry.source}</span>
                           </div>
                           <div
