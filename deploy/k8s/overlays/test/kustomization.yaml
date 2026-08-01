@@ -27,6 +27,11 @@ configMapGenerator:
       - NETBOX_URL=http://netbox.netbox.svc.cluster.local
       - NETBOX_SITE=azzda-hq
       - NETDASH_REFRESH_INTERVAL_MS=60000
+      # Live state overlaid on the NetBox structure: blackbox probe_success
+      # decides whether a device is actually up, and probe latency becomes a
+      # real metric series. Without this, status is NetBox's intent only.
+      - NETDASH_PROMETHEUS_URL=http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+      - NETDASH_METRICS_HISTORY_MINUTES=60
       # Authentication. The client secret and session secret come from the
       # netdash-secrets Secret; only non-sensitive settings live here.
       # Access requires the app-netdash group; homelab-admins grants admin.

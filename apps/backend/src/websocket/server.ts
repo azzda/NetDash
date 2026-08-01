@@ -147,9 +147,12 @@ export function attachWebSocketServer(options: WebSocketServerOptions): WebSocke
         lastError = message;
       }
 
-      // Stay quiet through a transient blip; the snapshot on screen is still
-      // good. Only tell users once it has failed enough times to matter.
-      if (consecutiveFailures < FAILURES_BEFORE_ALERTING) {
+      // Stay quiet through a transient blip, but only while there is still a
+      // good snapshot on screen. If the first load never succeeded there is
+      // nothing to look at, so say so immediately rather than leaving an
+      // unexplained empty graph.
+      const haveUsableSnapshot = snapshot.nodes.length > 0;
+      if (haveUsableSnapshot && consecutiveFailures < FAILURES_BEFORE_ALERTING) {
         return;
       }
 
@@ -159,9 +162,10 @@ export function attachWebSocketServer(options: WebSocketServerOptions): WebSocke
         protocolVersion: NETDASH_PROTOCOL_VERSION,
         type: "error",
         payload: {
-          message:
-            `Topology data is ${staleForMin} min stale - ${consecutiveFailures} failed ` +
-            `refreshes from ${provider.name}: ${message}`,
+          message: haveUsableSnapshot
+            ? `Topology data is ${staleForMin} min stale - ${consecutiveFailures} failed ` +
+              `refreshes from ${provider.name}: ${message}`
+            : `Could not load topology from ${provider.name}: ${message}`,
           recoverable: true,
         },
         ts: Date.now(),

@@ -32,6 +32,14 @@ export const backendEnvSchema = z.object({
   NETBOX_SITE: z.string().optional(),
 
   /**
+   * When set, live state (reachability, probe latency) is overlaid on whatever
+   * topology source is configured. Unset means structure only.
+   */
+  NETDASH_PROMETHEUS_URL: z.string().url().optional(),
+  /** How much probe history to chart. */
+  NETDASH_METRICS_HISTORY_MINUTES: z.coerce.number().int().positive().default(60),
+
+  /**
    * `disabled` (default) treats every caller as an anonymous admin, which is
    * only ever appropriate on a laptop. Any deployment reachable by anyone else
    * must set `oidc`.

@@ -60,6 +60,15 @@ export class NetBoxClient {
         const page = (await response.json()) as PaginatedResponse<T>;
         results.push(...page.results);
         url = page.next;
+      } catch (error) {
+        // A bare "This operation was aborted" gives no clue which of the six
+        // parallel fetches gave up; name the endpoint and the budget.
+        if (error instanceof Error && error.name === "AbortError") {
+          throw new Error(`NetBox ${endpoint} timed out after ${this.timeoutMs}ms`, {
+            cause: error,
+          });
+        }
+        throw error;
       } finally {
         clearTimeout(timer);
       }
