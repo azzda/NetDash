@@ -78,7 +78,19 @@ export function attachWebSocketServer(options: WebSocketServerOptions): WebSocke
   // the load on the upstream source.
   let snapshot: GraphSnapshotPayload = { nodes: [], edges: [], sequence: 0, ts: Date.now() };
   let lastError: string | null = null;
+  let consecutiveFailures = 0;
   const sequences: Sequences = { node: {}, edge: {} };
+
+  /**
+   * How many refreshes must fail before users are told.
+   *
+   * Real-world data from the homelab: NetBox was restarting every few hours, so
+   * roughly 0.4% of refreshes failed and every one recovered on the next tick.
+   * Alerting on the first failure meant a scary banner for a dashboard whose
+   * data was at most 60 seconds stale - noise that trains people to ignore
+   * warnings. Only speak up once the data is genuinely going stale.
+   */
+  const FAILURES_BEFORE_ALERTING = 3;
 
   const verifyClient = createUpgradeGuard(options.allowedOrigin, options.authorizeRequest);
   const wss = options.server
@@ -108,9 +120,10 @@ export function attachWebSocketServer(options: WebSocketServerOptions): WebSocke
       }
 
       if (lastError) {
-        console.log(`[${provider.name}] recovered after error`);
+        console.log(`[${provider.name}] recovered after ${consecutiveFailures} failed refresh(es)`);
         lastError = null;
       }
+      consecutiveFailures = 0;
       if (initial) {
         console.log(
           `[${provider.name}] loaded ${snapshot.nodes.length} nodes, ${snapshot.edges.length} edges`,
@@ -125,16 +138,32 @@ export function attachWebSocketServer(options: WebSocketServerOptions): WebSocke
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      consecutiveFailures += 1;
+
       // Keep serving the last good snapshot: a blip upstream should not blank
       // the dashboard.
       if (message !== lastError) {
-        console.error(`[${provider.name}] refresh failed: ${message}`);
+        console.error(`[${provider.name}] refresh failed (${consecutiveFailures}): ${message}`);
         lastError = message;
       }
+
+      // Stay quiet through a transient blip; the snapshot on screen is still
+      // good. Only tell users once it has failed enough times to matter.
+      if (consecutiveFailures < FAILURES_BEFORE_ALERTING) {
+        return;
+      }
+
+      const staleForMs = Date.now() - snapshot.ts;
+      const staleForMin = Math.round(staleForMs / 60_000);
       broadcast({
         protocolVersion: NETDASH_PROTOCOL_VERSION,
         type: "error",
-        payload: { message: `Topology refresh failed: ${message}`, recoverable: true },
+        payload: {
+          message:
+            `Topology data is ${staleForMin} min stale - ${consecutiveFailures} failed ` +
+            `refreshes from ${provider.name}: ${message}`,
+          recoverable: true,
+        },
         ts: Date.now(),
       });
     }

@@ -41,6 +41,7 @@ Container: `docker compose up --build` → `http://localhost:4000`
 ## Current features
 
 - Live topology from **NetBox** (devices, VMs, interfaces, cables, VLANs, IPs) or a deterministic mock — see [docs/data-sources.md](docs/data-sources.md)
+- **Keycloak OIDC login** with group-based RBAC and an authenticated WebSocket — see [docs/authentication.md](docs/authentication.md)
 - React Flow canvas with automatic Dagre DAG layout (LR)
 - Three node types: Hardware, Host, Service
 - Three traffic modes: Off, Combined, Bidirectional

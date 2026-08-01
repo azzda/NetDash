@@ -73,6 +73,7 @@ in `platform/cert-issuers/wildcard-certificate.yaml` when installing.
 4. `netdash-test.lab.azzda.cloud` resolves via external-dns → Traefik
    (`10.0.30.200`)
 
-> NetDash currently serves **mock data only**. Do not publish it through the
-> Cloudflare tunnel until authentication is in place — see the roadmap in
-> `PROGRESS.md`.
+> NetDash serves **real topology from NetBox** and requires a Keycloak login.
+> The test environment is internal-only (`*.lab`, no tunnel route). Before
+> publishing it more widely, confirm the auth posture in
+> [docs/authentication.md](https://github.com/azzda/NetDash/blob/main/docs/authentication.md).

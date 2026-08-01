@@ -31,6 +31,15 @@ VITE_NETDASH_WS_URL=ws://192.168.1.10:4000/ws
 | `NETBOX_URL` | *(unset)* | NetBox base URL (required when `NETDASH_SOURCE=netbox`) |
 | `NETBOX_TOKEN` | *(unset)* | Read-only NetBox 4.6 v2 token, `nbt_<key>.<secret>` |
 | `NETBOX_SITE` | *(unset)* | Optional NetBox site slug to restrict the topology to |
+| `NETDASH_AUTH` | `disabled` | `disabled` or `oidc` — see [Authentication](authentication.md) |
+| `NETDASH_OIDC_ISSUER` | *(unset)* | Keycloak realm URL (required when `NETDASH_AUTH=oidc`) |
+| `NETDASH_OIDC_CLIENT_ID` | *(unset)* | OIDC client id |
+| `NETDASH_OIDC_CLIENT_SECRET` | *(unset)* | OIDC client secret |
+| `NETDASH_PUBLIC_URL` | *(unset)* | Public base URL; the redirect URI is derived from it |
+| `NETDASH_SESSION_SECRET` | *(unset)* | 32+ character HMAC key for the session cookie |
+| `NETDASH_SESSION_TTL_SECONDS` | `28800` | Session lifetime (8 h) |
+| `NETDASH_ALLOWED_GROUPS` | `app-netdash` | Comma-separated groups granting access |
+| `NETDASH_ADMIN_GROUPS` | `homelab-admins` | Comma-separated groups granting admin |
 | `NETDASH_VERSION` | `dev` | Reported by `/health` (set by the Docker build) |
 | `NETDASH_COMMIT` | `unknown` | Reported by `/health` (set by the Docker build) |
 | `NETDASH_BUILD_TIME` | `unknown` | Reported by `/health` (set by the Docker build) |

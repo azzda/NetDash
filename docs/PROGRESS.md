@@ -99,9 +99,12 @@
 
 ## Auth & Multi-user
 
-- [ ] Keycloak OIDC login (homelab realm, `homelab-admins` gated)
-- [ ] Per-user RBAC, including per sub-feature
-- [ ] Audit log
+- [x] Keycloak OIDC login (auth code + PKCE, JWKS-verified id_token)
+- [x] Per-user RBAC — `app-netdash` → viewer, `homelab-admins` → admin, default deny
+- [x] Authenticated WebSocket (the upgrade is guarded, not just the pages)
+- [x] Audit log (structured JSON: login / logout / denied / rejected)
+- [x] Signed stateless sessions (multi-replica safe, no session store)
+- [ ] Differentiate what `viewer` vs `admin` may actually do (needs write actions first)
 - [ ] Multi-user WebSocket sync
 
 ---
