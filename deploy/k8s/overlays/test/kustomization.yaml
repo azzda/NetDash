@@ -10,7 +10,7 @@ resources:
 
 images:
   - name: ghcr.io/azzda/netdash
-    newTag: sha-6943c96
+    newTag: sha-73fa619
 
 configMapGenerator:
   - name: netdash-env
