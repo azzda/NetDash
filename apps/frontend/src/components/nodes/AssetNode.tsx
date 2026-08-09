@@ -1,6 +1,27 @@
 import { Handle, Position, type NodeProps } from "reactflow";
 import type { AssetType, NetDashNodeData, NodeStatus } from "@netdash/shared";
 
+/**
+ * A single connection point on a node side. Multiple handles let several cables
+ * to the same device fan out to distinct points instead of stacking on one, and
+ * each maps to a physical interface where we know it.
+ */
+export interface NodeHandleDescriptor {
+  /** Unique within the node; edges reference it via source/targetHandle. */
+  id: string;
+  /** Vertical position along the side, 0..1 (top..bottom). */
+  top: number;
+  /** Interface/port label for the tooltip, when known. */
+  label?: string;
+}
+
+export interface NodeHandles {
+  left: NodeHandleDescriptor[];
+  right: NodeHandleDescriptor[];
+}
+
+export type AssetNodeData = NetDashNodeData & { handles?: NodeHandles };
+
 const badgeByType: Record<AssetType, string> = {
   hardware: "bg-sky-100 text-sky-700",
   host: "bg-emerald-100 text-emerald-700",
@@ -22,16 +43,55 @@ const statusPresentation: Record<NodeStatus, { dot: string; label: string }> = {
   unmanaged: { dot: "bg-slate-400", label: "Unmanaged" },
 };
 
-function AssetNodeCard({
-  data,
-  forcedType,
-}: NodeProps<NetDashNodeData> & { forcedType: AssetType }) {
+function EdgeHandles({ handles }: { handles?: NodeHandles }) {
+  // Without per-interface handles, keep the original single pair so edges still
+  // attach at the middle of each side.
+  if (!handles || (handles.left.length === 0 && handles.right.length === 0)) {
+    return (
+      <>
+        <Handle type="target" position={Position.Left} className="!bg-slate-400" />
+        <Handle type="source" position={Position.Right} className="!bg-slate-400" />
+      </>
+    );
+  }
+
+  return (
+    <>
+      {handles.left.map((handle) => (
+        <Handle
+          key={handle.id}
+          id={handle.id}
+          type="target"
+          position={Position.Left}
+          isConnectable={false}
+          title={handle.label}
+          style={{ top: `${(handle.top * 100).toFixed(2)}%` }}
+          className="!h-2 !w-2 !bg-slate-400"
+        />
+      ))}
+      {handles.right.map((handle) => (
+        <Handle
+          key={handle.id}
+          id={handle.id}
+          type="source"
+          position={Position.Right}
+          isConnectable={false}
+          title={handle.label}
+          style={{ top: `${(handle.top * 100).toFixed(2)}%` }}
+          className="!h-2 !w-2 !bg-slate-400"
+        />
+      ))}
+    </>
+  );
+}
+
+function AssetNodeCard({ data, forcedType }: NodeProps<AssetNodeData> & { forcedType: AssetType }) {
   const status = statusPresentation[data.status] ?? statusPresentation.down;
   const type = forcedType;
 
   return (
     <article className={`asset-node-card w-60 rounded-xl border-l-4 p-2.5 ${accentByType[type]}`}>
-      <Handle type="target" position={Position.Left} className="!bg-slate-400" />
+      <EdgeHandles handles={data.handles} />
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h4 className="truncate text-sm font-semibold text-primary">{data.name}</h4>
@@ -47,19 +107,18 @@ function AssetNodeCard({
         <span className={`h-2.5 w-2.5 rounded-full ${status.dot}`} />
         <span>{status.label}</span>
       </div>
-      <Handle type="source" position={Position.Right} className="!bg-slate-400" />
     </article>
   );
 }
 
-export function HardwareNode(props: NodeProps<NetDashNodeData>) {
+export function HardwareNode(props: NodeProps<AssetNodeData>) {
   return <AssetNodeCard {...props} forcedType="hardware" />;
 }
 
-export function HostNode(props: NodeProps<NetDashNodeData>) {
+export function HostNode(props: NodeProps<AssetNodeData>) {
   return <AssetNodeCard {...props} forcedType="host" />;
 }
 
-export function ServiceNode(props: NodeProps<NetDashNodeData>) {
+export function ServiceNode(props: NodeProps<AssetNodeData>) {
   return <AssetNodeCard {...props} forcedType="service" />;
 }

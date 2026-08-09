@@ -11,15 +11,16 @@ import ReactFlow, {
   type OnEdgesChange,
   type OnNodesChange,
 } from "reactflow";
-import type {
-  NetDashEdge,
-  NetDashNode,
-  NetDashNodeData,
-  TopologyLayer,
-  TrafficMode,
-} from "@netdash/shared";
+import type { NetDashEdge, NetDashNode, TopologyLayer, TrafficMode } from "@netdash/shared";
 import type { LayerView } from "../../lib/uiPreferences";
-import { HardwareNode, HostNode, ServiceNode } from "../nodes/AssetNode";
+import {
+  HardwareNode,
+  HostNode,
+  ServiceNode,
+  type AssetNodeData,
+  type NodeHandleDescriptor,
+  type NodeHandles,
+} from "../nodes/AssetNode";
 import { TrafficEdge } from "./TrafficEdge";
 import "reactflow/dist/style.css";
 
@@ -117,16 +118,87 @@ const NODE_HEIGHT = 104;
 // Bias same-role nodes to sit together within a rank.
 const TYPE_ORDER: Record<NetDashNode["type"], number> = { hardware: 0, host: 1, service: 2 };
 
+interface Geometry {
+  positions: Map<string, { x: number; y: number }>;
+  nodeHandles: Map<string, NodeHandles>;
+  edgeHandles: Map<string, { sourceHandle: string; targetHandle: string }>;
+}
+
 /**
- * Compute left-to-right positions for the graph. Orthogonal-friendly spacing
- * (wider ranksep, real nodesep) plus role-ordered insertion keeps real-world
- * data from turning into a hairball. Returns a map so the caller can keep live
- * node data separate from geometry.
+ * The interface/port a given edge uses at a given node. Cables carry
+ * per-side interface labels; when we have one, edges that share a physical
+ * interface share a connection point, and different interfaces get different
+ * points. Without a label we fall back to a per-edge key so every connection
+ * still fans out to its own spot.
  */
-function computeLayout(
-  nodes: NetDashNode[],
-  edges: NetDashEdge[],
-): Map<string, { x: number; y: number }> {
+function interfaceKeyAt(edge: NetDashEdge, nodeId: string): { key: string; label?: string } {
+  const a = edge.data?.sideA;
+  const b = edge.data?.sideB;
+  const side = a?.nodeId === nodeId ? a : b?.nodeId === nodeId ? b : undefined;
+  const label = side?.interfaceLabel;
+  return label ? { key: `if:${label}`, label } : { key: `edge:${edge.id}` };
+}
+
+interface HandleAcc {
+  label?: string;
+  oppYs: number[];
+}
+
+function addHandle(
+  store: Map<string, Map<string, HandleAcc>>,
+  nodeId: string,
+  key: string,
+  label: string | undefined,
+  oppositeY: number,
+): void {
+  let perNode = store.get(nodeId);
+  if (!perNode) {
+    perNode = new Map();
+    store.set(nodeId, perNode);
+  }
+  const existing = perNode.get(key);
+  if (existing) {
+    existing.oppYs.push(oppositeY);
+    if (!existing.label && label) {
+      existing.label = label;
+    }
+  } else {
+    perNode.set(key, { label, oppYs: [oppositeY] });
+  }
+}
+
+/**
+ * Turn a side's accumulated handles into positioned descriptors. Ordering the
+ * handles by the average vertical position of what they connect to keeps the
+ * cables from crossing over each other right at the node edge.
+ */
+function positionHandles(
+  perNode: Map<string, HandleAcc> | undefined,
+  prefix: "src" | "tgt",
+): NodeHandleDescriptor[] {
+  if (!perNode) {
+    return [];
+  }
+  const entries = [...perNode.entries()].map(([key, acc]) => ({
+    key,
+    label: acc.label,
+    avgY: acc.oppYs.reduce((sum, y) => sum + y, 0) / acc.oppYs.length,
+  }));
+  entries.sort((a, b) => a.avgY - b.avgY);
+  const count = entries.length;
+  return entries.map((entry, index) => ({
+    id: `${prefix}:${entry.key}`,
+    top: (index + 1) / (count + 1),
+    label: entry.label,
+  }));
+}
+
+/**
+ * Compute left-to-right positions for the graph plus, for every node, a set of
+ * connection points (handles) so multiple cables to the same device fan out to
+ * distinct interfaces instead of stacking on one overlapping point.
+ */
+function computeGeometry(nodes: NetDashNode[], edges: NetDashEdge[]): Geometry {
   const g = new dagre.graphlib.Graph();
   g.setDefaultEdgeLabel(() => ({}));
   g.setGraph({
@@ -165,7 +237,37 @@ function computeLayout(
       });
     }
   }
-  return positions;
+
+  // Assign each edge a connection point on both ends. Right side = source
+  // (dagre draws left-to-right), left side = target.
+  const rightStore = new Map<string, Map<string, HandleAcc>>();
+  const leftStore = new Map<string, Map<string, HandleAcc>>();
+  const edgeHandles = new Map<string, { sourceHandle: string; targetHandle: string }>();
+
+  for (const edge of edges) {
+    const sourcePos = positions.get(edge.source);
+    const targetPos = positions.get(edge.target);
+    if (!sourcePos || !targetPos) {
+      continue;
+    }
+    const s = interfaceKeyAt(edge, edge.source);
+    const t = interfaceKeyAt(edge, edge.target);
+    addHandle(rightStore, edge.source, s.key, s.label, targetPos.y);
+    addHandle(leftStore, edge.target, t.key, t.label, sourcePos.y);
+    edgeHandles.set(edge.id, { sourceHandle: `src:${s.key}`, targetHandle: `tgt:${t.key}` });
+  }
+
+  const nodeHandles = new Map<string, NodeHandles>();
+  for (const node of nodes) {
+    const id = node.identity.id;
+    const right = positionHandles(rightStore.get(id), "src");
+    const left = positionHandles(leftStore.get(id), "tgt");
+    if (right.length || left.length) {
+      nodeHandles.set(id, { left, right });
+    }
+  }
+
+  return { positions, nodeHandles, edgeHandles };
 }
 
 interface NetDashCanvasProps {
@@ -228,16 +330,17 @@ export function NetDashCanvas({
     [layerView, nodes, visibleEdges],
   );
 
-  const positions = useMemo(
-    () => computeLayout(nodes, visibleEdges),
+  const geometry = useMemo(
+    () => computeGeometry(nodes, visibleEdges),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [structureKey],
   );
+  const { positions, nodeHandles, edgeHandles } = geometry;
 
-  const dagNodes: Node<NetDashNodeData>[] = nodes.map((node) => ({
+  const dagNodes: Node<AssetNodeData>[] = nodes.map((node) => ({
     id: node.identity.id,
     type: toFlowType(node.type),
-    data: node.data,
+    data: { ...node.data, handles: nodeHandles.get(node.identity.id) },
     position: positions.get(node.identity.id) ?? { x: 0, y: 0 },
     selected: node.identity.id === selectedNodeId,
     draggable: false,
@@ -245,10 +348,13 @@ export function NetDashCanvas({
   }));
 
   const flowEdges: Edge[] = visibleEdges.map((edge) => {
+    const handles = edgeHandles.get(edge.id);
     return {
       id: edge.id,
       source: edge.source,
       target: edge.target,
+      sourceHandle: handles?.sourceHandle,
+      targetHandle: handles?.targetHandle,
       type: "trafficEdge",
       animated: false,
       selected: edge.id === selectedEdgeId,
