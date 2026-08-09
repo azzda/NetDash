@@ -125,6 +125,23 @@ export default function App() {
           return;
         }
         setAuthState(state);
+        // Reflect the real session in Settings. Seeding here (in the async
+        // callback, not synchronously in the effect body) keeps it out of the
+        // render path. Only overwrite an untouched placeholder so a user's own
+        // edits survive.
+        if (state.user) {
+          const user = state.user;
+          setUserProfile((prev) =>
+            isPlaceholderProfile(prev)
+              ? {
+                  displayName: user.name ?? user.username,
+                  email: user.email ?? "",
+                  userId: user.username,
+                  role: user.role,
+                }
+              : prev,
+          );
+        }
         if (state.authEnabled && !state.authenticated) {
           startLogin();
         }
@@ -142,27 +159,6 @@ export default function App() {
 
   const signedInLabel =
     authState?.user?.name ?? authState?.user?.username ?? userProfile.displayName;
-
-  // Reflect the real session in Settings. Only overwrite while the profile is
-  // still the untouched placeholder, so a user's own edits are respected.
-  useEffect(() => {
-    const user = authState?.user;
-    if (!user) {
-      return;
-    }
-
-    setUserProfile((prev) => {
-      if (!isPlaceholderProfile(prev)) {
-        return prev;
-      }
-      return {
-        displayName: user.name ?? user.username,
-        email: user.email ?? "",
-        userId: user.username,
-        role: user.role,
-      };
-    });
-  }, [authState]);
 
   useEffect(() => {
     const ws = createWsClient({
