@@ -131,6 +131,7 @@ export function createSeededSnapshot(seed = 42): GraphSnapshotPayload {
     vpnStatus: NodeDetails["vpnStatus"],
     profile: "hardware" | "host" | "service",
     logLines: string[],
+    extensions?: NodeDetails["extensions"],
   ): NodeDetails {
     return {
       localDns,
@@ -139,6 +140,7 @@ export function createSeededSnapshot(seed = 42): GraphSnapshotPayload {
       vpnStatus,
       metrics: buildMetrics(localDns, profile),
       logs: buildLogs(localDns, logLines),
+      ...(extensions ? { extensions } : {}),
     };
   }
 
@@ -343,6 +345,40 @@ export function createSeededSnapshot(seed = 42): GraphSnapshotPayload {
         ),
       },
       position: { x: 980, y: 200 },
+    },
+    {
+      // An unmanaged switch: it forwards the management VLAN but has no CPU or
+      // IP to probe, so it lives in the third status (`unmanaged`) - present,
+      // but neither up nor down in the monitored sense.
+      identity: { id: "b2a9f4c7-6d1e-4c8a-9f2b-7c0e1a5d0012", key: "hardware:dlink-dgs108" },
+      type: "hardware",
+      data: {
+        name: "D-Link DGS-108",
+        ip: "",
+        status: "unmanaged",
+        assetType: "hardware",
+        details: detailsFor(
+          "dgs108.mgmt.lan",
+          undefined,
+          "unknown",
+          "unknown",
+          "hardware",
+          [
+            "Passive management-VLAN switch; no telemetry available.",
+            "Uplinks the core switch to several management interfaces.",
+          ],
+          {
+            source: "mock",
+            objectType: "dcim.device",
+            unmanaged: true,
+            role: "Access Switch",
+            model: "DGS-108",
+            manufacturer: "D-Link",
+            description: "8-port unmanaged gigabit switch carrying the management VLAN.",
+          },
+        ),
+      },
+      position: { x: 520, y: 40 },
     },
   ];
 
@@ -606,6 +642,73 @@ export function createSeededSnapshot(seed = 42): GraphSnapshotPayload {
         trafficInMbps: Number((5 + rand() * 15).toFixed(2)),
         packetsOutPerSec: Number((160 + rand() * 440).toFixed(0)),
         packetsInPerSec: Number((150 + rand() * 420).toFixed(0)),
+        trafficMbps: 0,
+        packetsPerSec: 0,
+        lastUpdated: Date.now(),
+      },
+    },
+    {
+      // Planned 10G storage uplink that has not been cabled yet: modelled so the
+      // topology can show what is coming, drawn dashed with no traffic.
+      id: "edge:crs310->am5-nas-planned",
+      source: nodes[2].identity.id,
+      target: nodes[6].identity.id,
+      data: {
+        animated: false,
+        status: "planned",
+        connectorUuid: "planned-000-0000-0000-000000000210",
+        displayName: "Planned 10G storage uplink (CRS310 to AM5 NAS)",
+        protocol: "Layer2 / Access",
+        vlan: "storage",
+        sideA: endpoint({
+          nodeId: nodes[2].identity.id,
+          label: nodes[2].data.name,
+          interfaceLabel: "sfp-sfpplus4",
+          physicalPort: "SFP+ 4",
+          logicalPort: "storage-access",
+        }),
+        sideB: endpoint({
+          nodeId: nodes[6].identity.id,
+          label: nodes[6].data.name,
+          interfaceLabel: "enp2s0",
+          physicalPort: "SFP+ 1",
+          logicalPort: "storage-access",
+        }),
+        lastUpdated: Date.now(),
+      },
+    },
+    {
+      // Management-VLAN uplink to the unmanaged switch. It carries traffic, but
+      // the switch itself can't be monitored - the node, not the link, is what
+      // shows the `unmanaged` state.
+      id: "edge:crs309->dgs108",
+      source: nodes[1].identity.id,
+      target: nodes[11].identity.id,
+      data: {
+        animated: true,
+        connectorUuid: "7200d0b8-8e1b-4a26-a1d7-31fd0a430011",
+        displayName: "CRS309 management uplink to DGS-108",
+        protocol: "Layer2 / Access",
+        vlan: "mgmt",
+        status: "connected",
+        sideA: endpoint({
+          nodeId: nodes[1].identity.id,
+          label: nodes[1].data.name,
+          interfaceLabel: "ether8",
+          physicalPort: "Ether 8",
+          logicalPort: "mgmt-access",
+        }),
+        sideB: endpoint({
+          nodeId: nodes[11].identity.id,
+          label: nodes[11].data.name,
+          interfaceLabel: "port1",
+          physicalPort: "Port 1",
+          logicalPort: "mgmt-access",
+        }),
+        trafficOutMbps: Number((1 + rand() * 4).toFixed(2)),
+        trafficInMbps: Number((1 + rand() * 3).toFixed(2)),
+        packetsOutPerSec: Number((40 + rand() * 120).toFixed(0)),
+        packetsInPerSec: Number((30 + rand() * 100).toFixed(0)),
         trafficMbps: 0,
         packetsPerSec: 0,
         lastUpdated: Date.now(),

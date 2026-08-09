@@ -108,13 +108,18 @@ export function mapDatasetToSnapshot(
     const id = nodeIdForDevice(device.id);
     deviceNodeIds.set(device.id, id);
 
+    // A device tagged `unmanaged` has no management plane to probe (an unmanaged
+    // switch, a dumb PDU). It is not up/down in the monitored sense - it just
+    // exists. Marking it as such stops the live layer from ever calling it dead.
+    const unmanaged = (device.tags ?? []).some((tag) => tag.slug === "unmanaged");
+
     nodes.push({
       identity: { id, key: `${assetType}:${slugify(name)}` },
       type: assetType,
       data: {
         name,
         ip: stripMask(device.primary_ip4?.address),
-        status: statusOf(device.status?.value),
+        status: unmanaged ? "unmanaged" : statusOf(device.status?.value),
         assetType,
         details: {
           certStatus: "unknown",
@@ -127,6 +132,7 @@ export function mapDatasetToSnapshot(
             objectId: device.id,
             status: device.status?.value,
             statusLabel: device.status?.label,
+            unmanaged: unmanaged || undefined,
             role: device.role?.name,
             model: device.device_type?.model ?? device.device_type?.display,
             manufacturer: device.device_type?.manufacturer?.name,

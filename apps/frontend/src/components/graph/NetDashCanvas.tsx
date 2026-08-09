@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import dagre from "dagre";
 import ReactFlow, {
   Background,
@@ -139,33 +139,60 @@ function SelectionFocusSync({
   return null;
 }
 
-function layoutDAG(nodes: Node<NetDashNodeData>[], edges: Edge[]): Node<NetDashNodeData>[] {
+// Uniform node footprint so dagre's spacing matches what is actually drawn.
+// The card is `w-60` (240px); the height covers title + address + status row.
+const NODE_WIDTH = 240;
+const NODE_HEIGHT = 104;
+
+// Bias same-role nodes to sit together within a rank.
+const TYPE_ORDER: Record<NetDashNode["type"], number> = { hardware: 0, host: 1, service: 2 };
+
+/**
+ * Compute left-to-right positions for the graph. Orthogonal-friendly spacing
+ * (wider ranksep, real nodesep) plus role-ordered insertion keeps real-world
+ * data from turning into a hairball. Returns a map so the caller can keep live
+ * node data separate from geometry.
+ */
+function computeLayout(
+  nodes: NetDashNode[],
+  edges: NetDashEdge[],
+): Map<string, { x: number; y: number }> {
   const g = new dagre.graphlib.Graph();
   g.setDefaultEdgeLabel(() => ({}));
-  g.setGraph({ rankdir: "LR", nodesep: 30, ranksep: 120, marginx: 24, marginy: 24 });
+  g.setGraph({
+    rankdir: "LR",
+    nodesep: 48,
+    ranksep: 160,
+    edgesep: 24,
+    marginx: 32,
+    marginy: 32,
+    ranker: "network-simplex",
+  });
 
-  for (const node of nodes) {
-    g.setNode(node.id, { width: 240, height: 120 });
+  const ordered = [...nodes].sort((a, b) => TYPE_ORDER[a.type] - TYPE_ORDER[b.type]);
+  const ids = new Set(ordered.map((node) => node.identity.id));
+  for (const node of ordered) {
+    g.setNode(node.identity.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
   }
-
   for (const edge of edges) {
-    g.setEdge(edge.source, edge.target);
+    if (ids.has(edge.source) && ids.has(edge.target)) {
+      g.setEdge(edge.source, edge.target);
+    }
   }
 
   dagre.layout(g);
 
-  return nodes.map((node) => {
-    const position = g.node(node.id);
-    return {
-      ...node,
-      position: {
-        x: position.x - 120,
-        y: position.y - 60,
-      },
-      draggable: false,
-      selectable: true,
-    };
-  });
+  const positions = new Map<string, { x: number; y: number }>();
+  for (const node of nodes) {
+    const laid = g.node(node.identity.id);
+    if (laid) {
+      positions.set(node.identity.id, {
+        x: laid.x - NODE_WIDTH / 2,
+        y: laid.y - NODE_HEIGHT / 2,
+      });
+    }
+  }
+  return positions;
 }
 
 interface NetDashCanvasProps {
@@ -209,12 +236,31 @@ export function NetDashCanvas({
     return "serviceNode";
   };
 
-  const flowNodes: Node<NetDashNodeData>[] = nodes.map((node) => ({
+  // Only the graph's structure (which nodes exist and how they connect) drives
+  // layout - not the per-tick status/metric churn. Memoising on that signature
+  // keeps positions stable and stops the whole graph re-laying-out every refresh.
+  const structureKey = useMemo(
+    () =>
+      `${nodes
+        .map((node) => node.identity.id)
+        .join("|")}::${edges.map((edge) => `${edge.id}>${edge.source}>${edge.target}`).join("|")}`,
+    [nodes, edges],
+  );
+
+  const positions = useMemo(
+    () => computeLayout(nodes, edges),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [structureKey],
+  );
+
+  const dagNodes: Node<NetDashNodeData>[] = nodes.map((node) => ({
     id: node.identity.id,
     type: toFlowType(node.type),
     data: node.data,
-    position: node.position,
+    position: positions.get(node.identity.id) ?? { x: 0, y: 0 },
     selected: node.identity.id === selectedNodeId,
+    draggable: false,
+    selectable: true,
   }));
 
   const flowEdges: Edge[] = edges.map((edge) => {
@@ -229,6 +275,8 @@ export function NetDashCanvas({
         trafficMode,
         connectorUuid: edge.data?.connectorUuid,
         displayName: edge.data?.displayName,
+        status: edge.data?.status,
+        live: edge.data?.animated ?? edge.data?.status === "connected",
         trafficMbps: edge.data?.trafficMbps,
         packetsPerSec: edge.data?.packetsPerSec,
         trafficOutMbps: edge.data?.trafficOutMbps,
@@ -239,8 +287,6 @@ export function NetDashCanvas({
       },
     };
   });
-
-  const dagNodes = layoutDAG(flowNodes, flowEdges);
 
   const onNodesChange: OnNodesChange = () => undefined;
   const onEdgesChange: OnEdgesChange = () => undefined;

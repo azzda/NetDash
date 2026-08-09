@@ -48,6 +48,13 @@ export function enrichSnapshot(
   }
 
   const nodes = snapshot.nodes.map((node) => {
+    // An unmanaged device has no management plane to probe. Even if some probe
+    // happened to match its IP, its status is a deliberate statement ("we don't
+    // watch this"), so live reachability must not overwrite it.
+    if (node.data.status === "unmanaged") {
+      return withExtensions(node, { unmanaged: true, monitored: false });
+    }
+
     const ip = ipOf(node);
     const probe = ip ? reachableByIp.get(ip) : undefined;
 

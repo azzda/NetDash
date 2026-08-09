@@ -109,6 +109,11 @@ export function createAuth(env: BackendEnv): AuthContext {
   });
 
   const secureCookies = (env.NETDASH_PUBLIC_URL as string).startsWith("https://");
+  // Keycloak (and any standard OIDC realm) serves a self-service Account Console
+  // at `${issuer}/account`. NetDash does not manage profiles itself - it just
+  // points users at the IdP's own console, which keeps working when the backing
+  // user store changes (e.g. moving to a Samba AD DC behind Keycloak).
+  const accountManageUrl = `${(env.NETDASH_OIDC_ISSUER as string).replace(/\/+$/, "")}/account`;
   const cookieBase = {
     httpOnly: true,
     sameSite: "lax" as const,
@@ -221,6 +226,7 @@ export function createAuth(env: BackendEnv): AuthContext {
     res.json({
       authenticated: true,
       authEnabled: true,
+      account: { manageUrl: accountManageUrl },
       user: {
         username: user.username,
         name: user.name,

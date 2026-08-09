@@ -70,13 +70,20 @@ the dashboard actively misleading. Real numbers arrive via the
 **Planned cabling stays visible.** NetBox models a cable that is designed but
 not yet run. Those edges are kept and carry `status: "planned"`, and never
 animate. The graph shows what exists *and* what's coming, which is most of the
-point of having a source of truth.
+point of having a source of truth. On the canvas, planned links render dashed
+and muted with no traffic dot; `decommissioning` and `unknown` links get their
+own dashed treatment, and the connector overview strip shows the lifecycle
+state as a pill.
 
 ### Status, and why `extensions` matters
 
-NetDash's node status is only `up` or `down`, but "offline" (powered down) and
-"planned" (doesn't exist yet) are very different kinds of down. The raw NetBox
-facts therefore travel in `details.extensions`:
+NetDash's node status is `up`, `down`, or `unmanaged`. "Offline" (powered down)
+and "planned" (doesn't exist yet) are very different kinds of down, and an
+**unmanaged** device (an unmanaged switch, a dumb PDU) has no management plane to
+probe at all — it is neither up nor down, just present. A device is marked
+`unmanaged` when NetBox carries the tag slug `unmanaged`; the live layer then
+never contradicts it with reachability. The raw NetBox facts travel in
+`details.extensions`:
 
 ```json
 {
@@ -85,6 +92,7 @@ facts therefore travel in `details.extensions`:
   "objectId": 3,
   "status": "offline",
   "statusLabel": "Offline",
+  "unmanaged": true,
   "role": "Hypervisor",
   "model": "PowerEdge R640",
   "manufacturer": "Dell",
@@ -95,8 +103,11 @@ facts therefore travel in `details.extensions`:
 }
 ```
 
-Surfacing that in the inspector is a UI task that hasn't been done yet — the
-data is already on the wire.
+The node inspector surfaces these facts under an **Infrastructure** section:
+role/model/manufacturer/serial/site/rack/tenant (and, for VMs, the cluster and
+compute shape), the NetBox status label, probe latency, and a monitoring
+affordance that distinguishes "not monitored" from "probe reachable/unreachable"
+so a disagreement between intent and reality is legible at a glance.
 
 ### Object identity
 

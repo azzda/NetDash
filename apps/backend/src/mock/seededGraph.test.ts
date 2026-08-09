@@ -23,12 +23,28 @@ describe("createSeededSnapshot", () => {
     expect(aFirstPoint).not.toBe(bFirstPoint);
   });
 
-  it("generates 11 nodes", () => {
-    expect(snapshot.nodes).toHaveLength(11);
+  it("generates 12 nodes", () => {
+    expect(snapshot.nodes).toHaveLength(12);
   });
 
-  it("generates 10 edges", () => {
-    expect(snapshot.edges).toHaveLength(10);
+  it("generates 12 edges", () => {
+    expect(snapshot.edges).toHaveLength(12);
+  });
+
+  it("includes a planned link drawn without live traffic", () => {
+    const planned = snapshot.edges.filter((edge) => edge.data?.status === "planned");
+    expect(planned.length).toBeGreaterThan(0);
+    for (const edge of planned) {
+      expect(edge.data?.animated).toBe(false);
+    }
+  });
+
+  it("includes an unmanaged device flagged in its extensions", () => {
+    const unmanaged = snapshot.nodes.filter((node) => node.data.status === "unmanaged");
+    expect(unmanaged.length).toBeGreaterThan(0);
+    for (const node of unmanaged) {
+      expect(node.data.details?.extensions?.unmanaged).toBe(true);
+    }
   });
 
   it("every node has required identity fields", () => {
@@ -48,7 +64,7 @@ describe("createSeededSnapshot", () => {
 
   it("every node has valid status", () => {
     for (const node of snapshot.nodes) {
-      expect(["up", "down"]).toContain(node.data.status);
+      expect(["up", "down", "unmanaged"]).toContain(node.data.status);
     }
   });
 

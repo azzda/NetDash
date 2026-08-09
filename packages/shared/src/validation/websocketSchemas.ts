@@ -2,7 +2,7 @@ import { z } from "zod";
 import { NETDASH_PROTOCOL_VERSION } from "../config/protocol";
 
 const assetTypeSchema = z.enum(["hardware", "host", "service"]);
-const nodeStatusSchema = z.enum(["up", "down"]);
+const nodeStatusSchema = z.enum(["up", "down", "unmanaged"]);
 const certStatusSchema = z.enum(["valid", "expiring", "expired", "unknown"]);
 const vpnStatusSchema = z.enum(["connected", "disconnected", "unknown"]);
 const logSeveritySchema = z.enum(["info", "warn", "error"]);

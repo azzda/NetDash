@@ -12,6 +12,7 @@ import {
   type CurrencyPreference,
   type DensityPreference,
   type ThemePreference,
+  type UserProfile,
   applyCustomPalette,
   clearCustomPalette,
   defaultCustomPalette,
@@ -25,6 +26,39 @@ import { fetchAuthState, logout, startLogin, type AuthState } from "./services/a
 import { useNetDashStore } from "./store/useNetDashStore";
 
 type WorkspaceMode = "topology" | "inventory";
+
+/**
+ * Placeholder identity used only until the backend says who we are. When auth is
+ * enabled it is replaced by the real Keycloak identity; when auth is disabled the
+ * backend returns the anonymous admin. Either way, Settings should reflect the
+ * actual session rather than an invented "Owner".
+ */
+const DEFAULT_USER_PROFILE = {
+  displayName: "NetDash user",
+  email: "",
+  userId: "unknown",
+  role: "viewer",
+};
+
+/**
+ * Profiles that were never personalised - the current default plus the legacy
+ * hardcoded demo identity that earlier builds persisted to localStorage. Any of
+ * these may be replaced by the real signed-in identity.
+ */
+const PLACEHOLDER_PROFILES: UserProfile[] = [
+  DEFAULT_USER_PROFILE,
+  { displayName: "Admin", email: "admin@netdash.local", userId: "usr-00017", role: "Owner" },
+];
+
+function isPlaceholderProfile(profile: UserProfile): boolean {
+  return PLACEHOLDER_PROFILES.some(
+    (candidate) =>
+      candidate.displayName === profile.displayName &&
+      candidate.email === profile.email &&
+      candidate.userId === profile.userId &&
+      candidate.role === profile.role,
+  );
+}
 
 interface SearchResult {
   id: string;
@@ -65,12 +99,7 @@ export default function App() {
     "reconnecting",
   );
   const [userProfile, setUserProfile] = useState(() =>
-    readStoredJson("netdash:user-profile", {
-      displayName: "Admin",
-      email: "admin@netdash.local",
-      userId: "usr-00017",
-      role: "Owner",
-    }),
+    readStoredJson("netdash:user-profile", DEFAULT_USER_PROFILE),
   );
   const {
     nodes,
@@ -113,6 +142,27 @@ export default function App() {
 
   const signedInLabel =
     authState?.user?.name ?? authState?.user?.username ?? userProfile.displayName;
+
+  // Reflect the real session in Settings. Only overwrite while the profile is
+  // still the untouched placeholder, so a user's own edits are respected.
+  useEffect(() => {
+    const user = authState?.user;
+    if (!user) {
+      return;
+    }
+
+    setUserProfile((prev) => {
+      if (!isPlaceholderProfile(prev)) {
+        return prev;
+      }
+      return {
+        displayName: user.name ?? user.username,
+        email: user.email ?? "",
+        userId: user.username,
+        role: user.role,
+      };
+    });
+  }, [authState]);
 
   useEffect(() => {
     const ws = createWsClient({
@@ -658,6 +708,7 @@ export default function App() {
         trafficMode={trafficMode}
         effectiveTheme={effectiveTheme}
         userProfile={userProfile}
+        authState={authState}
         onClose={() => setSettingsOpen(false)}
         onThemeChange={setThemePreference}
         onDensityChange={setDensityPreference}
@@ -665,6 +716,7 @@ export default function App() {
         onCustomPaletteChange={setCustomPalette}
         onTrafficModeChange={setTrafficMode}
         onUserProfileChange={setUserProfile}
+        onSignOut={() => void logout()}
       />
 
       <UsagePriceDrawer

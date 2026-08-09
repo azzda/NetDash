@@ -1,5 +1,6 @@
 import type { NetDashNode } from "@netdash/shared";
 import { useEffect, useState } from "react";
+import { NodeInfrastructureFacts } from "./NodeInfrastructureFacts";
 
 interface NodeDetailsPanelProps {
   node?: NetDashNode;
@@ -86,6 +87,8 @@ export function NodeDetailsPanel({
           <dd className="font-medium text-primary">{details?.vpnStatus ?? "unknown"}</dd>
         </div>
       </dl>
+
+      <NodeInfrastructureFacts details={details} />
     </aside>
   );
 }

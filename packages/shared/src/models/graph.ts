@@ -2,7 +2,7 @@ export type AssetType = "hardware" | "host" | "service";
 
 export type TrafficMode = "off" | "combined" | "bidirectional";
 
-export type NodeStatus = "up" | "down";
+export type NodeStatus = "up" | "down" | "unmanaged";
 
 export type CertStatus = "valid" | "expiring" | "expired" | "unknown";
 

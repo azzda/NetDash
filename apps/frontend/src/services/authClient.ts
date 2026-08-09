@@ -11,6 +11,11 @@ export interface AuthState {
   authEnabled: boolean;
   authenticated: boolean;
   user?: AuthenticatedUser;
+  /** Self-service links exposed by the IdP (present only under OIDC). */
+  account?: {
+    /** The IdP's own Account Console (e.g. Keycloak `${issuer}/account`). */
+    manageUrl: string;
+  };
 }
 
 /**

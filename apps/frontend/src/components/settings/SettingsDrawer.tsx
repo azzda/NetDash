@@ -7,6 +7,7 @@ import type {
   ThemePreference,
   UserProfile,
 } from "../../lib/uiPreferences";
+import type { AuthState } from "../../services/authClient";
 
 interface SettingsDrawerProps {
   open: boolean;
@@ -17,6 +18,7 @@ interface SettingsDrawerProps {
   trafficMode: TrafficMode;
   effectiveTheme: ThemePreference;
   userProfile: UserProfile;
+  authState: AuthState | null;
   onClose: () => void;
   onThemeChange: (value: ThemePreference) => void;
   onDensityChange: (value: DensityPreference) => void;
@@ -24,6 +26,88 @@ interface SettingsDrawerProps {
   onCustomPaletteChange: (value: CustomPalette) => void;
   onTrafficModeChange: (value: TrafficMode) => void;
   onUserProfileChange: (value: UserProfile) => void;
+  onSignOut: () => void;
+}
+
+/**
+ * Self-service for the signed-in identity. NetDash deliberately does not manage
+ * profiles, passwords or MFA itself - it links out to the IdP's own Account
+ * Console. That keeps working across a change of user store (e.g. moving to a
+ * Samba AD DC federated behind Keycloak).
+ */
+function AccountSection({
+  authState,
+  onSignOut,
+}: {
+  authState: AuthState | null;
+  onSignOut: () => void;
+}) {
+  if (!authState?.authEnabled) {
+    return (
+      <section className="surface-card space-y-2 p-3">
+        <h3 className="text-sm font-semibold text-primary">Account</h3>
+        <p className="text-xs text-dimmed">
+          NetDash is running without authentication (local/dev mode). Account self-service appears
+          when it is deployed with OIDC.
+        </p>
+      </section>
+    );
+  }
+
+  const user = authState.user;
+  const manageUrl = authState.account?.manageUrl;
+
+  return (
+    <section className="surface-card space-y-3 p-3">
+      <div>
+        <h3 className="text-sm font-semibold text-primary">Account</h3>
+        <p className="mt-1 text-xs text-dimmed">
+          Your identity comes from the single sign-on provider. Profile, password and two-factor
+          settings are managed there.
+        </p>
+      </div>
+
+      <div className="flex items-start gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-600 text-lg font-bold text-white">
+          {(user?.name ?? user?.username ?? "?").slice(0, 1).toUpperCase()}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-primary">
+            {user?.name ?? user?.username ?? "Signed in"}
+          </p>
+          {user?.email ? <p className="truncate text-xs text-dimmed">{user.email}</p> : null}
+          <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-dimmed">
+            {user?.role ? (
+              <span className="rounded-full bg-white/5 px-2 py-1">Role {user.role}</span>
+            ) : null}
+            {(user?.groups ?? []).map((group) => (
+              <span key={group} className="rounded-full bg-white/5 px-2 py-1">
+                {group}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {manageUrl ? (
+          <a
+            href={manageUrl}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="button-subtle px-3 py-2 text-xs"
+          >
+            Manage account ↗
+          </a>
+        ) : null}
+        {authState.authenticated ? (
+          <button type="button" onClick={onSignOut} className="button-subtle px-3 py-2 text-xs">
+            Sign out
+          </button>
+        ) : null}
+      </div>
+    </section>
+  );
 }
 
 export function SettingsDrawer({
@@ -35,6 +119,7 @@ export function SettingsDrawer({
   trafficMode,
   effectiveTheme,
   userProfile,
+  authState,
   onClose,
   onThemeChange,
   onDensityChange,
@@ -42,6 +127,7 @@ export function SettingsDrawer({
   onCustomPaletteChange,
   onTrafficModeChange,
   onUserProfileChange,
+  onSignOut,
 }: SettingsDrawerProps) {
   const [visible, setVisible] = useState(false);
 
@@ -111,7 +197,16 @@ export function SettingsDrawer({
           </button>
         </div>
 
-        <section className="surface-card space-y-3 p-3">
+        <AccountSection authState={authState} onSignOut={onSignOut} />
+
+        <section className="surface-card mt-4 space-y-3 p-3">
+          <div>
+            <h3 className="text-sm font-semibold text-primary">Local display preferences</h3>
+            <p className="mt-1 text-xs text-dimmed">
+              How you appear inside this browser. These are cosmetic and stored locally — they do
+              not change your single sign-on account.
+            </p>
+          </div>
           <div className="flex items-start gap-3">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-600 text-lg font-bold text-white">
               {userProfile.displayName.slice(0, 1).toUpperCase()}

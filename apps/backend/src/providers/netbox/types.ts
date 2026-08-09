@@ -33,6 +33,7 @@ export interface NetBoxDevice {
   status: NetBoxChoice;
   description?: string;
   comments?: string;
+  tags?: NetBoxRef[];
   primary_ip4?: { id: number; address: string } | null;
 }
 

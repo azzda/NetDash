@@ -175,6 +175,29 @@ describe("mapDatasetToSnapshot", () => {
     expect(snapshot.nodes.find((n) => n.data.name === "crs309")?.data.status).toBe("up");
   });
 
+  it("maps a device tagged `unmanaged` to the unmanaged status", () => {
+    const data = dataset();
+    data.devices.push({
+      id: 9,
+      name: "dgs108",
+      display: "dgs108",
+      role: { id: 12, name: "Access Switch", slug: "access-switch" },
+      device_type: { id: 23, model: "DGS-108", manufacturer: { id: 31, name: "D-Link" } },
+      site: { id: 1, name: "azzda HQ" },
+      rack: null,
+      tenant: null,
+      cluster: null,
+      // NetBox has no "unmanaged" status; the intent rides on a tag.
+      status: { value: "active", label: "Active" },
+      tags: [{ id: 5, name: "Unmanaged", slug: "unmanaged" }],
+      primary_ip4: null,
+    });
+
+    const dgs108 = mapDatasetToSnapshot(data).nodes.find((n) => n.data.name === "dgs108");
+    expect(dgs108?.data.status).toBe("unmanaged");
+    expect(dgs108?.data.details?.extensions?.unmanaged).toBe(true);
+  });
+
   it("builds edges from cables, with endpoint detail on both sides", () => {
     const snapshot = mapDatasetToSnapshot(dataset());
     const edge = snapshot.edges.find((e) => e.id === "netbox:cable:900");

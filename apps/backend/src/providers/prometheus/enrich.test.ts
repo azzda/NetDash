@@ -18,7 +18,13 @@ function snapshot(): GraphSnapshotPayload {
   };
 }
 
-function node(id: string, name: string, ip: string, status: "up" | "down", netboxStatus: string) {
+function node(
+  id: string,
+  name: string,
+  ip: string,
+  status: "up" | "down" | "unmanaged",
+  netboxStatus: string,
+) {
   return {
     identity: { id, key: `hardware:${name}` },
     type: "hardware" as const,
@@ -94,6 +100,21 @@ describe("enrichSnapshot", () => {
     expect(dgs108?.data.details?.extensions?.monitored).toBe(false);
     expect(dgs108?.data.details?.extensions?.reachable).toBeUndefined();
     expect(dgs108?.data.status).toBe("down"); // unchanged from the input
+  });
+
+  it("never overrides an unmanaged device, even if a probe matches its IP", () => {
+    const input = snapshot();
+    // An unmanaged switch that happens to share an IP with a live probe reading.
+    input.nodes.push(node("netbox:device:8", "unmanaged-sw", "10.0.1.2", "unmanaged", "active"));
+
+    const result = enrichSnapshot(input, live());
+    const sw = result.nodes.find((n) => n.data.name === "unmanaged-sw");
+
+    // Reachability must not flip it up/down - it stays unmanaged.
+    expect(sw?.data.status).toBe("unmanaged");
+    expect(sw?.data.details?.extensions?.unmanaged).toBe(true);
+    expect(sw?.data.details?.extensions?.monitored).toBe(false);
+    expect(sw?.data.details?.extensions?.reachable).toBeUndefined();
   });
 
   it("does not flip an unprobed but active device to down", () => {

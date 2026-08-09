@@ -9,13 +9,16 @@
 ## Core Topology View
 
 - [x] DAG layout (Dagre, left-to-right)
+- [x] Orthogonal (elbow) edge routing + uniform nodes + role-grouped layout (ArgoCD-style, Tier 1)
 - [x] Three traffic modes (off / combined / bidirectional)
 - [x] Node cards with name, IP, status badge
+- [x] Three-state node status (`up` / `down` / `unmanaged`) for devices with no management plane
 - [x] Selection-aware right panel
 - [x] Scroll-driven compaction (graph shrinks, observability expands)
-- [ ] Memoize layout for large graphs
+- [x] Memoize layout (recompute only when graph structure changes, not on every refresh)
 - [ ] Error boundary around canvas
 - [ ] Support >50 nodes (virtualization / clustering)
+- [ ] Physical vs. logical edge layers + view modes (ArgoCD-style, Tier 2)
 
 ## Observability
 
@@ -58,14 +61,14 @@
 
 - [x] Provider interface (pluggable data sources, mock behind `NETDASH_SOURCE`)
 - [x] **NetBox adapter** — devices, VMs, interfaces, cables, VLANs, IPs (**live**: 13 nodes, 19 edges from the real lab)
-- [ ] Prometheus adapter — node/service status and metrics
+- [x] **Prometheus adapter** — real up/down + probe latency, overlaid on the NetBox topology
 - [ ] Loki adapter — real log panes
 - [ ] Hubble adapter — real flows on edges
 - [ ] Argo CD adapter — app health / sync state
 - [ ] Proxmox + TrueNAS adapters — capacity, power state, pools
 - [ ] Physical vs. service topology view split
-- [ ] Surface NetBox `extensions` (role, model, serial, site, tenant, real status) in the inspector
-- [ ] Render planned vs. connected links differently on the canvas
+- [x] Surface NetBox `extensions` (role, model, serial, site, tenant, real status) in the inspector
+- [x] Render planned vs. connected links differently on the canvas
 - [ ] Persistent storage (SQLite / Postgres) for NetDash's own state
 - [ ] Historical data retention
 
@@ -104,9 +107,10 @@
 - [x] Authenticated WebSocket (the upgrade is guarded, not just the pages)
 - [x] Audit log (structured JSON: login / logout / denied / rejected)
 - [x] Signed stateless sessions (multi-replica safe, no session store)
+- [x] Account self-service — Settings links out to the IdP Account Console (profile / password / MFA) + sign out
 - [ ] Differentiate what `viewer` vs `admin` may actually do (needs write actions first)
 - [ ] Multi-user WebSocket sync
 
 ---
 
-*Add items freely. Check them off when done. Last updated: 2026-05-16*
+*Add items freely. Check them off when done. Last updated: 2026-08-09*

@@ -82,6 +82,14 @@ export function EdgeOverviewStrip({ edge, densityPreference, onClose }: EdgeOver
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {data?.status && data.status !== "connected" ? (
+            <span
+              className="status-pill capitalize"
+              title="Link lifecycle from the source of truth"
+            >
+              {data.status}
+            </span>
+          ) : null}
           <span className="status-pill">{data?.protocol ?? "mixed"}</span>
           <span className="status-pill">{data?.vlan ?? "shared fabric"}</span>
           <button type="button" onClick={onClose} className="button-subtle px-2 py-1 text-xs">

@@ -1,39 +1,40 @@
-import { BaseEdge, EdgeLabelRenderer, getStraightPath, type EdgeProps } from "reactflow";
-import type { TrafficMode } from "@netdash/shared";
+import {
+  BaseEdge,
+  EdgeLabelRenderer,
+  getSmoothStepPath,
+  Position,
+  type EdgeProps,
+} from "reactflow";
+import type { ConnectorStatus, TrafficMode } from "@netdash/shared";
 
 interface TrafficEdgeData {
   trafficMode: TrafficMode;
+  status?: ConnectorStatus;
+  /** Whether the link is carrying traffic right now (drives the motion dot). */
+  live?: boolean;
   trafficMbps?: number;
   packetsPerSec?: number;
   trafficOutMbps?: number;
   trafficInMbps?: number;
 }
 
-function createLaneGeometry(
-  sourceX: number,
-  sourceY: number,
-  targetX: number,
-  targetY: number,
-  lane: 1 | -1,
-) {
-  const midX = (sourceX + targetX) / 2;
-  const midY = (sourceY + targetY) / 2;
-  const deltaX = targetX - sourceX;
-  const deltaY = targetY - sourceY;
-  const length = Math.max(Math.hypot(deltaX, deltaY), 1);
-  const angleWeight = Math.abs(deltaX) / length;
-  const laneOffset = 22 + angleWeight * 10;
-  const normalX = (-deltaY / length) * laneOffset * lane;
-  const normalY = (deltaX / length) * laneOffset * lane;
-  const controlX = midX + normalX;
-  const controlY = midY + normalY;
-
-  return {
-    drawPath: `M ${sourceX},${sourceY} Q ${controlX},${controlY} ${targetX},${targetY}`,
-    reversePath: `M ${targetX},${targetY} Q ${controlX},${controlY} ${sourceX},${sourceY}`,
-    labelX: midX + normalX * 0.55,
-    labelY: midY + normalY * 0.55,
-  };
+/**
+ * A source of truth like NetBox models planned and decommissioning cabling
+ * alongside live cabling. Those are drawn differently so "what is coming" and
+ * "what is going away" never look like working links: dashed + muted, and with
+ * no traffic animation because nothing flows over them.
+ */
+function statusStyle(status: ConnectorStatus | undefined) {
+  switch (status) {
+    case "planned":
+      return { dash: "7 6", muted: true, label: "Planned" };
+    case "decommissioning":
+      return { dash: "2 5", muted: true, label: "Decommissioning" };
+    case "unknown":
+      return { dash: "1 6", muted: true, label: "Unverified" };
+    default:
+      return { dash: undefined as string | undefined, muted: false, label: undefined };
+  }
 }
 
 function animationDuration(metric: number | undefined) {
@@ -42,117 +43,143 @@ function animationDuration(metric: number | undefined) {
   return `${seconds.toFixed(2)}s`;
 }
 
+function labelChip(text: string, left: number, top: number, strong = false) {
+  return (
+    <div
+      className={
+        strong
+          ? "nodrag nopan pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full px-2 py-0.5 text-[11px] font-medium"
+          : "nodrag nopan pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]"
+      }
+      style={{
+        left: `${left}px`,
+        top: `${top}px`,
+        background: "var(--label-bg)",
+        color: "var(--label-text)",
+        opacity: strong ? 0.85 : 0.75,
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
 export function TrafficEdge({
   id,
   sourceX,
   sourceY,
   targetX,
   targetY,
+  sourcePosition,
+  targetPosition,
   selected,
   data,
 }: EdgeProps<TrafficEdgeData>) {
-  const [straightPath, straightCenterX, straightCenterY] = getStraightPath({
+  // Orthogonal (elbow) routing, the way ArgoCD's resource graph draws edges. It
+  // keeps links from cutting diagonally across unrelated nodes, which is most of
+  // what makes a real-world topology look like a hairball.
+  const [path, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
+    sourcePosition: sourcePosition ?? Position.Right,
     targetX,
     targetY,
+    targetPosition: targetPosition ?? Position.Left,
+    borderRadius: 14,
   });
 
   const mode = data?.trafficMode ?? "combined";
+  const decor = statusStyle(data?.status);
+  // Planned/decommissioning/unknown links carry no traffic, so no motion dot
+  // even in combined/bidirectional modes.
+  const live = (data?.live ?? true) && !decor.dash;
   const combinedLabel =
     data?.trafficMbps !== undefined ? `${data.trafficMbps.toFixed(1)} Mbps` : undefined;
-  const bidirectionalOutLabel =
-    data?.trafficOutMbps !== undefined ? `${data.trafficOutMbps.toFixed(1)} Mbps` : undefined;
-  const bidirectionalInLabel =
-    data?.trafficInMbps !== undefined ? `${data.trafficInMbps.toFixed(1)} Mbps` : undefined;
-  const stroke = selected ? "#38bdf8" : "var(--edge-stroke)";
-  const mutedStroke = "var(--edge-stroke-muted)";
+  const outLabel =
+    data?.trafficOutMbps !== undefined
+      ? `${data.trafficOutMbps.toFixed(1)} Mbps \u25B8`
+      : undefined;
+  const inLabel =
+    data?.trafficInMbps !== undefined ? `\u25C2 ${data.trafficInMbps.toFixed(1)} Mbps` : undefined;
+  const baseStroke = selected ? "#38bdf8" : "var(--edge-stroke)";
+  const stroke = decor.muted && !selected ? "var(--edge-stroke-muted)" : baseStroke;
+  const dashArray = decor.dash;
 
   if (mode === "off") {
-    return <BaseEdge id={id} path={straightPath} style={{ stroke, strokeWidth: 2 }} />;
-  }
-
-  if (mode === "combined") {
     return (
       <>
-        <BaseEdge id={id} path={straightPath} style={{ stroke, strokeWidth: 2.4 }} />
-        <circle r="4" fill="var(--edge-activity)">
-          <animateMotion
-            dur={animationDuration(data?.trafficMbps)}
-            path={straightPath}
-            repeatCount="indefinite"
-          />
-        </circle>
-        {combinedLabel ? (
-          <EdgeLabelRenderer>
-            <div
-              className="nodrag nopan pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full px-2 py-0.5 text-[11px] font-medium"
-              style={{
-                left: `${straightCenterX}px`,
-                top: `${straightCenterY - 12}px`,
-                background: "var(--label-bg)",
-                color: "var(--label-text)",
-                opacity: 0.85,
-              }}
-            >
-              {combinedLabel}
-            </div>
-          </EdgeLabelRenderer>
+        <BaseEdge
+          id={id}
+          path={path}
+          style={{ stroke, strokeWidth: 2, strokeDasharray: dashArray }}
+        />
+        {decor.label ? (
+          <EdgeLabelRenderer>{labelChip(decor.label, labelX, labelY)}</EdgeLabelRenderer>
         ) : null}
       </>
     );
   }
 
-  const forwardLane = createLaneGeometry(sourceX, sourceY, targetX, targetY, 1);
-  const reverseLane = createLaneGeometry(sourceX, sourceY, targetX, targetY, -1);
+  if (mode === "combined") {
+    return (
+      <>
+        <BaseEdge
+          id={id}
+          path={path}
+          style={{ stroke, strokeWidth: 2.4, strokeDasharray: dashArray }}
+        />
+        {live ? (
+          <circle r="4" fill="var(--edge-activity)">
+            <animateMotion
+              dur={animationDuration(data?.trafficMbps)}
+              path={path}
+              repeatCount="indefinite"
+            />
+          </circle>
+        ) : null}
+        <EdgeLabelRenderer>
+          {decor.label ? labelChip(decor.label, labelX, labelY + 12) : null}
+          {combinedLabel && live ? labelChip(combinedLabel, labelX, labelY - 12, true) : null}
+        </EdgeLabelRenderer>
+      </>
+    );
+  }
 
+  // Bidirectional: one orthogonal path, two directional dots. The "in" dot walks
+  // the same path in reverse (keyPoints 1->0), which keeps the routing clean
+  // instead of drawing two diagonal lanes that re-introduce the crossing mess.
   return (
     <>
-      <path d={forwardLane.drawPath} fill="none" stroke={stroke} strokeWidth="2.2" />
-      <path d={reverseLane.drawPath} fill="none" stroke={mutedStroke} strokeWidth="2.2" />
-      <circle r="3.7" fill="var(--edge-activity)">
-        <animateMotion
-          dur={animationDuration(data?.trafficOutMbps)}
-          path={forwardLane.drawPath}
-          repeatCount="indefinite"
-        />
-      </circle>
-      <circle r="3.7" fill="var(--edge-activity-secondary)">
-        <animateMotion
-          dur={animationDuration(data?.trafficInMbps)}
-          path={reverseLane.reversePath}
-          repeatCount="indefinite"
-        />
-      </circle>
+      <BaseEdge
+        id={id}
+        path={path}
+        style={{ stroke, strokeWidth: 2.2, strokeDasharray: dashArray }}
+      />
+      {live ? (
+        <>
+          <circle r="3.7" fill="var(--edge-activity)">
+            <animateMotion
+              dur={animationDuration(data?.trafficOutMbps)}
+              path={path}
+              repeatCount="indefinite"
+            />
+          </circle>
+          <circle r="3.7" fill="var(--edge-activity-secondary)">
+            <animateMotion
+              dur={animationDuration(data?.trafficInMbps)}
+              path={path}
+              keyPoints="1;0"
+              keyTimes="0;1"
+              calcMode="linear"
+              repeatCount="indefinite"
+            />
+          </circle>
+        </>
+      ) : null}
       <EdgeLabelRenderer>
-        {bidirectionalOutLabel ? (
-          <div
-            className="nodrag nopan pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full px-2 py-0.5 text-[11px] font-medium"
-            style={{
-              left: `${forwardLane.labelX}px`,
-              top: `${forwardLane.labelY}px`,
-              background: "var(--label-bg)",
-              color: "var(--label-text)",
-              opacity: 0.85,
-            }}
-          >
-            {bidirectionalOutLabel}
-          </div>
-        ) : null}
-        {bidirectionalInLabel ? (
-          <div
-            className="nodrag nopan pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full px-2 py-0.5 text-[11px] font-medium"
-            style={{
-              left: `${reverseLane.labelX}px`,
-              top: `${reverseLane.labelY}px`,
-              background: "var(--label-bg)",
-              color: "var(--label-text)",
-              opacity: 0.85,
-            }}
-          >
-            {bidirectionalInLabel}
-          </div>
-        ) : null}
+        {decor.label ? labelChip(decor.label, labelX, labelY) : null}
+        {outLabel && live ? labelChip(outLabel, labelX, labelY - 12, true) : null}
+        {inLabel && live ? labelChip(inLabel, labelX, labelY + 12, true) : null}
       </EdgeLabelRenderer>
     </>
   );
