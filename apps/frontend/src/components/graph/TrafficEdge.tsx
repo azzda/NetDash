@@ -5,11 +5,12 @@ import {
   Position,
   type EdgeProps,
 } from "reactflow";
-import type { ConnectorStatus, TrafficMode } from "@netdash/shared";
+import type { ConnectorStatus, TopologyLayer, TrafficMode } from "@netdash/shared";
 
 interface TrafficEdgeData {
   trafficMode: TrafficMode;
   status?: ConnectorStatus;
+  layer?: TopologyLayer;
   /** Whether the link is carrying traffic right now (drives the motion dot). */
   live?: boolean;
   trafficMbps?: number;
@@ -89,10 +90,13 @@ export function TrafficEdge({
   });
 
   const mode = data?.trafficMode ?? "combined";
+  const isLogical = data?.layer === "logical";
   const decor = statusStyle(data?.status);
-  // Planned/decommissioning/unknown links carry no traffic, so no motion dot
-  // even in combined/bidirectional modes.
-  const live = (data?.live ?? true) && !decor.dash;
+  // Logical links are relationships, not cables: they never carry bandwidth, so
+  // no motion dot, and they are drawn dashed in a secondary colour so they read
+  // as "rides on top of" rather than "is wired to". Planned/decommissioning/
+  // unknown physical links are also dashed and carry no traffic.
+  const live = !isLogical && (data?.live ?? true) && !decor.dash;
   const combinedLabel =
     data?.trafficMbps !== undefined ? `${data.trafficMbps.toFixed(1)} Mbps` : undefined;
   const outLabel =
@@ -101,9 +105,17 @@ export function TrafficEdge({
       : undefined;
   const inLabel =
     data?.trafficInMbps !== undefined ? `\u25C2 ${data.trafficInMbps.toFixed(1)} Mbps` : undefined;
-  const baseStroke = selected ? "#38bdf8" : "var(--edge-stroke)";
+  const baseStroke = selected
+    ? "#38bdf8"
+    : isLogical
+      ? "var(--edge-activity-secondary)"
+      : "var(--edge-stroke)";
   const stroke = decor.muted && !selected ? "var(--edge-stroke-muted)" : baseStroke;
-  const dashArray = decor.dash;
+  // Logical layer uses a fine dotted line, distinct from the status dashes.
+  const dashArray = isLogical ? "1 5" : decor.dash;
+  // In the combined layer view a logical edge still wants a small tag so it is
+  // legible next to physical cabling.
+  const layerLabel = isLogical ? (decor.label ?? "logical") : decor.label;
 
   if (mode === "off") {
     return (
@@ -113,8 +125,8 @@ export function TrafficEdge({
           path={path}
           style={{ stroke, strokeWidth: 2, strokeDasharray: dashArray }}
         />
-        {decor.label ? (
-          <EdgeLabelRenderer>{labelChip(decor.label, labelX, labelY)}</EdgeLabelRenderer>
+        {layerLabel ? (
+          <EdgeLabelRenderer>{labelChip(layerLabel, labelX, labelY)}</EdgeLabelRenderer>
         ) : null}
       </>
     );
@@ -138,7 +150,7 @@ export function TrafficEdge({
           </circle>
         ) : null}
         <EdgeLabelRenderer>
-          {decor.label ? labelChip(decor.label, labelX, labelY + 12) : null}
+          {layerLabel ? labelChip(layerLabel, labelX, labelY + 12) : null}
           {combinedLabel && live ? labelChip(combinedLabel, labelX, labelY - 12, true) : null}
         </EdgeLabelRenderer>
       </>
@@ -177,7 +189,7 @@ export function TrafficEdge({
         </>
       ) : null}
       <EdgeLabelRenderer>
-        {decor.label ? labelChip(decor.label, labelX, labelY) : null}
+        {layerLabel ? labelChip(layerLabel, labelX, labelY) : null}
         {outLabel && live ? labelChip(outLabel, labelX, labelY - 12, true) : null}
         {inLabel && live ? labelChip(inLabel, labelX, labelY + 12, true) : null}
       </EdgeLabelRenderer>

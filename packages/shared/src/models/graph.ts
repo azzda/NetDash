@@ -84,6 +84,16 @@ export interface NetDashNode {
 
 export type ConnectorStatus = "connected" | "planned" | "decommissioning" | "unknown";
 
+/**
+ * Which topology a connection belongs to. `physical` is real cabling (what you
+ * could trip over in the rack); `logical` is a relationship that rides on top -
+ * a VM running on a host, a service depending on another, a route. Keeping them
+ * as separate layers lets the UI show one, the other, or both, instead of one
+ * blended hairball. An edge with no layer is treated as physical (the default
+ * for cable-derived links).
+ */
+export type TopologyLayer = "physical" | "logical";
+
 export interface NetDashEdgeData {
   animated?: boolean;
   connectorUuid?: string;
@@ -96,6 +106,8 @@ export interface NetDashEdgeData {
    * graph should be able to show what is coming, not just what is.
    */
   status?: ConnectorStatus;
+  /** Physical cabling vs. a logical relationship. Defaults to physical. */
+  layer?: TopologyLayer;
   sideA?: ConnectorEndpointDetails;
   sideB?: ConnectorEndpointDetails;
   policyReferences?: ConnectorPolicyReference[];

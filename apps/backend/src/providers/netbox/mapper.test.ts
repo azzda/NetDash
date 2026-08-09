@@ -211,6 +211,7 @@ describe("mapDatasetToSnapshot", () => {
     expect(edge?.data?.protocol).toBe("dac-passive");
     expect(edge?.data?.status).toBe("connected");
     expect(edge?.data?.animated).toBe(true);
+    expect(edge?.data?.layer).toBe("physical");
   });
 
   it("keeps planned cabling in the graph but never animates it", () => {
@@ -242,6 +243,8 @@ describe("mapDatasetToSnapshot", () => {
     expect(runsOn?.source).toBe(nodeIdForDevice(2));
     expect(runsOn?.target).toBe(nodeIdForVirtualMachine(7));
     expect(runsOn?.data?.protocol).toBe("virtualization");
+    // "runs on" is a relationship, not a cable - it belongs to the logical layer.
+    expect(runsOn?.data?.layer).toBe("logical");
   });
 
   it("never invents metrics or logs for real hardware", () => {

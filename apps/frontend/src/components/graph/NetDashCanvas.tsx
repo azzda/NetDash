@@ -11,7 +11,14 @@ import ReactFlow, {
   type OnEdgesChange,
   type OnNodesChange,
 } from "reactflow";
-import type { NetDashEdge, NetDashNode, NetDashNodeData, TrafficMode } from "@netdash/shared";
+import type {
+  NetDashEdge,
+  NetDashNode,
+  NetDashNodeData,
+  TopologyLayer,
+  TrafficMode,
+} from "@netdash/shared";
+import type { LayerView } from "../../lib/uiPreferences";
 import { HardwareNode, HostNode, ServiceNode } from "../nodes/AssetNode";
 import { TrafficEdge } from "./TrafficEdge";
 import "reactflow/dist/style.css";
@@ -26,17 +33,35 @@ const edgeTypes = {
   trafficEdge: TrafficEdge,
 };
 
+const layerViews: LayerView[] = ["all", "physical", "logical"];
+
+// Edges with no explicit layer are physical (the default for cable-derived links).
+function layerOf(edge: NetDashEdge): TopologyLayer {
+  return edge.data?.layer ?? "physical";
+}
+
+function edgeVisibleInLayer(edge: NetDashEdge, view: LayerView): boolean {
+  return view === "all" || layerOf(edge) === view;
+}
+
 interface GraphToolbarProps {
   trafficMode: TrafficMode;
   onTrafficModeChange: (mode: TrafficMode) => void;
+  layerView: LayerView;
+  onLayerViewChange: (view: LayerView) => void;
 }
 
-function GraphToolbar({ trafficMode, onTrafficModeChange }: GraphToolbarProps) {
+function GraphToolbar({
+  trafficMode,
+  onTrafficModeChange,
+  layerView,
+  onLayerViewChange,
+}: GraphToolbarProps) {
   const reactFlow = useReactFlow();
 
   return (
     <Panel position="bottom-left" className="!m-3">
-      <div className="graph-toolbar flex items-center gap-1 rounded-xl p-1">
+      <div className="graph-toolbar flex flex-wrap items-center gap-1 rounded-xl p-1">
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -62,6 +87,29 @@ function GraphToolbar({ trafficMode, onTrafficModeChange }: GraphToolbarProps) {
           >
             Fit
           </button>
+        </div>
+
+        <span className="graph-toolbar__divider" />
+
+        <div className="flex items-center gap-1">
+          {layerViews.map((view) => (
+            <button
+              key={view}
+              type="button"
+              onClick={() => onLayerViewChange(view)}
+              className="graph-toolbar__button capitalize"
+              data-active={layerView === view}
+              title={
+                view === "physical"
+                  ? "Physical cabling only"
+                  : view === "logical"
+                    ? "Logical relationships only"
+                    : "Physical + logical"
+              }
+            >
+              {view}
+            </button>
+          ))}
         </div>
 
         <span className="graph-toolbar__divider" />
@@ -202,6 +250,8 @@ interface NetDashCanvasProps {
   selectedEdgeId?: string;
   trafficMode: TrafficMode;
   onTrafficModeChange: (mode: TrafficMode) => void;
+  layerView: LayerView;
+  onLayerViewChange: (view: LayerView) => void;
   densityPreference: "compact" | "comfortable";
   effectiveTheme: "dark" | "light" | "custom";
   onNodeClick: (nodeId: string) => void;
@@ -218,6 +268,8 @@ export function NetDashCanvas({
   selectedEdgeId,
   trafficMode,
   onTrafficModeChange,
+  layerView,
+  onLayerViewChange,
   densityPreference,
   effectiveTheme,
   onNodeClick,
@@ -236,19 +288,27 @@ export function NetDashCanvas({
     return "serviceNode";
   };
 
-  // Only the graph's structure (which nodes exist and how they connect) drives
-  // layout - not the per-tick status/metric churn. Memoising on that signature
-  // keeps positions stable and stops the whole graph re-laying-out every refresh.
+  // Filtering to a single layer both answers "show me only cabling / only
+  // relationships" and cuts edge crossings by drawing fewer lines at once.
+  const visibleEdges = useMemo(
+    () => edges.filter((edge) => edgeVisibleInLayer(edge, layerView)),
+    [edges, layerView],
+  );
+
+  // Only the graph's structure (which nodes exist and how the *visible* edges
+  // connect) drives layout - not the per-tick status/metric churn. Memoising on
+  // that signature keeps positions stable and stops the whole graph
+  // re-laying-out every refresh, while still re-flowing when the layer changes.
   const structureKey = useMemo(
     () =>
-      `${nodes
-        .map((node) => node.identity.id)
-        .join("|")}::${edges.map((edge) => `${edge.id}>${edge.source}>${edge.target}`).join("|")}`,
-    [nodes, edges],
+      `${layerView}::${nodes.map((node) => node.identity.id).join("|")}::${visibleEdges
+        .map((edge) => `${edge.id}>${edge.source}>${edge.target}`)
+        .join("|")}`,
+    [layerView, nodes, visibleEdges],
   );
 
   const positions = useMemo(
-    () => computeLayout(nodes, edges),
+    () => computeLayout(nodes, visibleEdges),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [structureKey],
   );
@@ -263,7 +323,7 @@ export function NetDashCanvas({
     selectable: true,
   }));
 
-  const flowEdges: Edge[] = edges.map((edge) => {
+  const flowEdges: Edge[] = visibleEdges.map((edge) => {
     return {
       id: edge.id,
       source: edge.source,
@@ -276,6 +336,7 @@ export function NetDashCanvas({
         connectorUuid: edge.data?.connectorUuid,
         displayName: edge.data?.displayName,
         status: edge.data?.status,
+        layer: layerOf(edge),
         live: edge.data?.animated ?? edge.data?.status === "connected",
         trafficMbps: edge.data?.trafficMbps,
         packetsPerSec: edge.data?.packetsPerSec,
@@ -325,7 +386,12 @@ export function NetDashCanvas({
           selectedNodeId={selectedNodeId}
           selectedEdgeId={selectedEdgeId}
         />
-        <GraphToolbar trafficMode={trafficMode} onTrafficModeChange={onTrafficModeChange} />
+        <GraphToolbar
+          trafficMode={trafficMode}
+          onTrafficModeChange={onTrafficModeChange}
+          layerView={layerView}
+          onLayerViewChange={onLayerViewChange}
+        />
       </ReactFlow>
     </div>
   );

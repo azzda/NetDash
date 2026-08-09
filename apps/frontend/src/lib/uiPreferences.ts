@@ -2,6 +2,12 @@ export type ThemePreference = "dark" | "light" | "custom";
 export type DensityPreference = "compact" | "comfortable";
 export type CurrencyPreference = "eur" | "usd" | "jpy";
 
+/**
+ * Which topology layer(s) the canvas shows. Filtering to one layer is also the
+ * simplest way to cut edge overlap: fewer edges, fewer crossings.
+ */
+export type LayerView = "all" | "physical" | "logical";
+
 export interface CustomPalette {
   accent: string;
   surface: string;
@@ -21,6 +27,7 @@ export const storageKeys = {
   density: "netdash:density",
   currency: "netdash:currency",
   customPalette: "netdash:custom-palette",
+  layerView: "netdash:layer-view",
 } as const;
 
 export const defaultCustomPalette: CustomPalette = {

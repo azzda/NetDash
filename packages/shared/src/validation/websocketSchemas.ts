@@ -86,6 +86,7 @@ const edgeSchema = z.object({
       protocol: z.string().optional(),
       vlan: z.string().optional(),
       status: z.enum(["connected", "planned", "decommissioning", "unknown"]).optional(),
+      layer: z.enum(["physical", "logical"]).optional(),
       sideA: connectorEndpointSchema.optional(),
       sideB: connectorEndpointSchema.optional(),
       policyReferences: z.array(connectorPolicyReferenceSchema).optional(),

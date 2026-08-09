@@ -82,6 +82,11 @@ export function EdgeOverviewStrip({ edge, densityPreference, onClose }: EdgeOver
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {data?.layer === "logical" ? (
+            <span className="status-pill" title="Logical relationship (not physical cabling)">
+              logical
+            </span>
+          ) : null}
           {data?.status && data.status !== "connected" ? (
             <span
               className="status-pill capitalize"

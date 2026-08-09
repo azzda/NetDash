@@ -714,6 +714,50 @@ export function createSeededSnapshot(seed = 42): GraphSnapshotPayload {
         lastUpdated: Date.now(),
       },
     },
+    {
+      // Logical layer: a service dependency, not a cable. Home Assistant resolves
+      // names via Pi-hole. Drawn on the logical view, never carries bandwidth.
+      id: "edge:homeassistant->pihole-dns",
+      source: nodes[9].identity.id,
+      target: nodes[7].identity.id,
+      data: {
+        layer: "logical",
+        status: "connected",
+        connectorUuid: "logical-dns-ha-pihole",
+        displayName: "Home Assistant resolves DNS via Pi-hole",
+        protocol: "DNS",
+        lastUpdated: Date.now(),
+      },
+    },
+    {
+      // Logical layer: reverse-proxy publication.
+      id: "edge:nginx-proxy-manager->homeassistant-proxy",
+      source: nodes[8].identity.id,
+      target: nodes[9].identity.id,
+      data: {
+        layer: "logical",
+        status: "connected",
+        connectorUuid: "logical-proxy-npm-ha",
+        displayName: "Nginx Proxy Manager publishes Home Assistant",
+        protocol: "reverse-proxy",
+        lastUpdated: Date.now(),
+      },
+    },
+    {
+      // Logical layer: a workload running on a host (the "runs on" relationship
+      // NetBox models for VMs).
+      id: "edge:proxmox-dell->pihole-runs",
+      source: nodes[5].identity.id,
+      target: nodes[7].identity.id,
+      data: {
+        layer: "logical",
+        status: "connected",
+        connectorUuid: "logical-runs-pve-pihole",
+        displayName: "Proxmox Dell Server runs Pi-hole",
+        protocol: "virtualization",
+        lastUpdated: Date.now(),
+      },
+    },
   ];
 
   for (const edge of edges) {

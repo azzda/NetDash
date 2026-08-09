@@ -75,6 +75,16 @@ and muted with no traffic dot; `decommissioning` and `unknown` links get their
 own dashed treatment, and the connector overview strip shows the lifecycle
 state as a pill.
 
+**Physical vs. logical layers.** Every edge carries a `layer`: `physical` for
+real cabling (mapped from NetBox cables) or `logical` for a relationship that
+rides on top — a VM running on a host, a service depending on another, a route.
+Cable edges are `physical`; the VM "runs on" edge is `logical`. An edge with no
+`layer` is treated as physical. The canvas has a **Physical / Logical / All**
+view toggle; switching layer re-runs the layout over just the visible edges,
+which both answers "show me only cabling / only relationships" and cuts edge
+crossings by drawing fewer lines at once. Logical edges are drawn dotted in a
+secondary colour and never animate (they carry no bandwidth).
+
 ### Status, and why `extensions` matters
 
 NetDash's node status is `up`, `down`, or `unmanaged`. "Offline" (powered down)

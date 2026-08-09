@@ -11,6 +11,7 @@ import { UsagePriceDrawer } from "./components/settings/UsagePriceDrawer";
 import {
   type CurrencyPreference,
   type DensityPreference,
+  type LayerView,
   type ThemePreference,
   type UserProfile,
   applyCustomPalette,
@@ -88,6 +89,9 @@ export default function App() {
   );
   const [trafficMode, setTrafficMode] = useState<TrafficMode>(() =>
     readStoredPreference(storageKeys.trafficMode, "bidirectional"),
+  );
+  const [layerView, setLayerView] = useState<LayerView>(() =>
+    readStoredPreference(storageKeys.layerView, "all"),
   );
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>(
     () => readStoredPreference("netdash:workspace-mode", "topology") as WorkspaceMode,
@@ -195,6 +199,10 @@ export default function App() {
   useEffect(() => {
     window.localStorage.setItem(storageKeys.trafficMode, trafficMode);
   }, [trafficMode]);
+
+  useEffect(() => {
+    window.localStorage.setItem(storageKeys.layerView, layerView);
+  }, [layerView]);
 
   useEffect(() => {
     window.localStorage.setItem("netdash:workspace-mode", workspaceMode);
@@ -629,6 +637,8 @@ export default function App() {
                       selectedEdgeId={selectedEdgeId}
                       trafficMode={trafficMode}
                       onTrafficModeChange={setTrafficMode}
+                      layerView={layerView}
+                      onLayerViewChange={setLayerView}
                       densityPreference={densityPreference}
                       effectiveTheme={effectiveTheme}
                       onNodeClick={(nodeId) => setSelectedNode(nodeId)}

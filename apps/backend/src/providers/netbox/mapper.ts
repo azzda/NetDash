@@ -230,6 +230,7 @@ export function mapDatasetToSnapshot(
         displayName: `${nodeNames.get(source) ?? "host"} runs ${vm.name}`,
         protocol: "virtualization",
         status: "connected",
+        layer: "logical",
         lastUpdated: now,
       },
     });
@@ -271,6 +272,7 @@ function mapCable(cable: NetBoxCable, ctx: CableContext): NetDashEdge | null {
     protocol: cable.type ?? undefined,
     vlan: vlanLabel(a.iface) ?? vlanLabel(b.iface),
     status: status === "connected" ? "connected" : status === "planned" ? "planned" : "unknown",
+    layer: "physical",
     sideA,
     sideB,
     lastUpdated: ctx.now,

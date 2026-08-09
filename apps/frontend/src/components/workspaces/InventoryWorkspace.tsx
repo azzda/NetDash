@@ -44,6 +44,7 @@ function buildEdgeSearchText(edge: NetDashEdge) {
     edge.data?.connectorUuid,
     edge.data?.protocol,
     edge.data?.vlan,
+    edge.data?.layer,
     edge.data?.sideA?.label,
     edge.data?.sideB?.label,
     edge.data?.sideA?.interfaceLabel,
@@ -213,10 +214,11 @@ export function InventoryWorkspace({
                 </tbody>
               </table>
             ) : (
-              <table className="w-full min-w-[840px] border-collapse text-sm">
+              <table className="w-full min-w-[920px] border-collapse text-sm">
                 <thead className="bg-white/5 text-left text-[11px] uppercase tracking-[0.16em] text-dimmed">
                   <tr>
                     <th className="px-3 py-2 font-medium">Connector</th>
+                    <th className="px-3 py-2 font-medium">Layer</th>
                     <th className="px-3 py-2 font-medium">Protocol</th>
                     <th className="px-3 py-2 font-medium">VLAN</th>
                     <th className="px-3 py-2 font-medium">Bandwidth</th>
@@ -244,6 +246,9 @@ export function InventoryWorkspace({
                               {edge.data?.connectorUuid ?? edge.id}
                             </p>
                           </div>
+                        </td>
+                        <td className="px-3 py-2 text-dimmed capitalize">
+                          {edge.data?.layer ?? "physical"}
                         </td>
                         <td className="px-3 py-2 text-dimmed">{edge.data?.protocol ?? "mixed"}</td>
                         <td className="px-3 py-2 text-dimmed">

@@ -10,6 +10,7 @@
 
 - [x] DAG layout (Dagre, left-to-right)
 - [x] Orthogonal (elbow) edge routing + uniform nodes + role-grouped layout (ArgoCD-style, Tier 1)
+- [x] Physical vs. logical edge layers + view modes (ArgoCD-style, Tier 2)
 - [x] Three traffic modes (off / combined / bidirectional)
 - [x] Node cards with name, IP, status badge
 - [x] Three-state node status (`up` / `down` / `unmanaged`) for devices with no management plane
@@ -18,7 +19,7 @@
 - [x] Memoize layout (recompute only when graph structure changes, not on every refresh)
 - [ ] Error boundary around canvas
 - [ ] Support >50 nodes (virtualization / clustering)
-- [ ] Physical vs. logical edge layers + view modes (ArgoCD-style, Tier 2)
+- [ ] Collapsible node groups (ArgoCD-style, Tier 2b)
 
 ## Observability
 
@@ -66,7 +67,7 @@
 - [ ] Hubble adapter — real flows on edges
 - [ ] Argo CD adapter — app health / sync state
 - [ ] Proxmox + TrueNAS adapters — capacity, power state, pools
-- [ ] Physical vs. service topology view split
+- [x] Physical vs. logical topology view split (layer tag + Physical / Logical / All view modes)
 - [x] Surface NetBox `extensions` (role, model, serial, site, tenant, real status) in the inspector
 - [x] Render planned vs. connected links differently on the canvas
 - [ ] Persistent storage (SQLite / Postgres) for NetDash's own state

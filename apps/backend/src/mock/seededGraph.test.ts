@@ -27,8 +27,19 @@ describe("createSeededSnapshot", () => {
     expect(snapshot.nodes).toHaveLength(12);
   });
 
-  it("generates 12 edges", () => {
-    expect(snapshot.edges).toHaveLength(12);
+  it("generates 15 edges", () => {
+    expect(snapshot.edges).toHaveLength(15);
+  });
+
+  it("includes both physical and logical edges", () => {
+    const logical = snapshot.edges.filter((edge) => edge.data?.layer === "logical");
+    const physical = snapshot.edges.filter((edge) => edge.data?.layer !== "logical");
+    expect(logical.length).toBeGreaterThan(0);
+    expect(physical.length).toBeGreaterThan(0);
+    // Logical relationships never carry bandwidth.
+    for (const edge of logical) {
+      expect(edge.data?.trafficMbps ?? 0).toBe(0);
+    }
   });
 
   it("includes a planned link drawn without live traffic", () => {
