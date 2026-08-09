@@ -28,7 +28,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          # Single source of truth: .node-version (also what local tooling reads).
+          # Keeps CI and developer machines on the same major, so version-gated
+          # lint rules can't pass locally yet fail in CI.
+          node-version-file: .node-version
           cache: pnpm
 
       - name: Install dependencies

@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev:frontend": "pnpm --filter @netdash/frontend dev",
     "dev:backend": "pnpm --filter @netdash/backend dev",
