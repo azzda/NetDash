@@ -10,15 +10,19 @@ interface GraphProvider {
 }
 ```
 
-Adding Prometheus, Loki or Hubble later means adding providers (or decorating
-this one) — not touching the WebSocket layer or the UI.
+Adding Loki or Hubble later means adding providers (or decorating this one) —
+not touching the WebSocket layer or the UI. The Prometheus provider below is
+exactly this pattern: a **decorator** that wraps a base provider.
 
-Select one with `NETDASH_SOURCE`:
+Select the base source with `NETDASH_SOURCE`:
 
 | Value | Source | Notes |
 |---|---|---|
 | `mock` *(default)* | deterministic seeded graph | a fresh checkout runs with no dependencies |
 | `netbox` | live NetBox instance | the real lab |
+
+Then, independently, set `NETDASH_PROMETHEUS_URL` to overlay **live state** on
+whatever base source is selected (see [Prometheus live-state provider](#prometheus-live-state-provider)).
 
 ## The refresh loop
 
@@ -60,8 +64,8 @@ NETBOX_SITE=azzda-hq          # optional, restricts to one site
 **No invented metrics.** The adapter emits no metrics and no logs, and the
 random traffic ticker only runs for `synthetic` providers. NetBox knows
 *structure*, not *state* — painting made-up load onto real hardware would make
-the dashboard actively misleading. Real numbers arrive with the Prometheus
-provider.
+the dashboard actively misleading. Real numbers arrive via the
+[Prometheus live-state provider](#prometheus-live-state-provider), layered on top.
 
 **Planned cabling stays visible.** NetBox models a cable that is designed but
 not yet run. Those edges are kept and carry `status: "planned"`, and never
@@ -100,3 +104,63 @@ Node and edge ids are derived from NetBox primary keys (`netbox:device:3`,
 `netbox:cable:900`, `netbox:vm:7`) so they are **stable across refreshes**.
 Selection therefore survives a refresh, and future per-object state can key off
 them safely.
+
+## Prometheus live-state provider
+
+NetBox says what *should* exist; Prometheus says what's *actually reachable* right
+now. The Prometheus provider is a **decorator**, not a source: it wraps the base
+provider (usually `netbox`), takes its topology unchanged, and overlays live
+reachability and latency onto the nodes.
+
+```env
+NETDASH_SOURCE=netbox
+NETDASH_PROMETHEUS_URL=http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+NETDASH_METRICS_HISTORY_MINUTES=60   # optional, range window for the latency series
+```
+
+If `NETDASH_PROMETHEUS_URL` is unset, the base provider is used as-is — the
+decorator is purely additive and opt-in. The reported `source` becomes
+`netbox+prometheus` when active.
+
+### The join is by IP, never by name
+
+Each node's status is matched to a blackbox `probe_success` series **by its
+`primary_ip4`**, not its hostname. NetBox owns the address, the ICMP probe list
+targets that same address, so the two can't drift on naming. (The infra repo's
+`netbox-validate.py` cross-checks the probe list against `lab.yaml` in both
+directions to keep them in lockstep.)
+
+### Enrichment rules (the important part)
+
+The overlay is a pure function; the precedence is deliberately conservative:
+
+| Situation | Result |
+|---|---|
+| Node **is probed**, `probe_success=1` | status `up` — reality confirms it's reachable |
+| Node **is probed**, `probe_success=0` | status `down` — reality overrides NetBox intent |
+| Node **has no probe** | **left untouched** — NetBox intent is kept |
+
+> **Absence of evidence is not evidence of absence.** A device with no probe is
+> *never* marked down just because Prometheus has nothing on it — an unmonitored
+> host is not a dead host. Only a *watched* device can have its NetBox intent
+> contradicted, and only then does live reality win.
+
+When live state and NetBox intent disagree, the original NetBox status is
+preserved in `extensions.netboxStatus` so the UI can explain the disagreement
+rather than silently pick a side.
+
+### What lands on the node
+
+- `extensions.monitored` — whether a probe exists for this node
+- `extensions.reachable` — the live `probe_success` result (only when monitored)
+- `extensions.latencyMs` — most recent probe RTT
+- a **probe-latency metric series** over `NETDASH_METRICS_HISTORY_MINUTES`, so the
+  inspector can graph it (a down host reads at the blackbox timeout, ~5000 ms)
+
+### Degrades, never blanks
+
+If Prometheus is unreachable, the decorator returns the base topology untouched
+rather than failing the whole snapshot — you lose the live overlay, not the map.
+Client-facing errors name their source (`"Prometheus query timed out after …"`)
+with the original error attached as `cause`, so a NetBox problem and a Prometheus
+problem are never confused.
