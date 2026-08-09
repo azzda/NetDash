@@ -11,6 +11,10 @@ interface NetDashStore {
   edges: NetDashEdge[];
   selectedNodeId?: string;
   selectedEdgeId?: string;
+  /** Whether the current graph is synthetic (demo/mock) data. */
+  synthetic: boolean;
+  /** Provider that produced the current graph (e.g. "mock", "netbox+prometheus"). */
+  source?: string;
   sequences: SequenceState;
   applyMessage: (message: NetDashWsMessage) => void;
   setSelectedNode: (nodeId?: string) => void;
@@ -22,6 +26,8 @@ export const useNetDashStore = create<NetDashStore>((set) => ({
   nodes: [],
   edges: [],
   sequences: { node: {}, edge: {} },
+  synthetic: false,
+  source: undefined,
   selectedNodeId: undefined,
   selectedEdgeId: undefined,
   setSelectedNode: (nodeId) => set({ selectedNodeId: nodeId, selectedEdgeId: undefined }),
@@ -44,6 +50,8 @@ export const useNetDashStore = create<NetDashStore>((set) => ({
         return {
           nodes: message.payload.nodes,
           edges: message.payload.edges,
+          synthetic: message.payload.synthetic ?? false,
+          source: message.payload.source,
           selectedNodeId: state.selectedNodeId,
           selectedEdgeId: state.selectedEdgeId,
           sequences: { node: nextNodeSeq, edge: nextEdgeSeq },

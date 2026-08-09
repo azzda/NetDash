@@ -108,10 +108,14 @@ export function mapDatasetToSnapshot(
     const id = nodeIdForDevice(device.id);
     deviceNodeIds.set(device.id, id);
 
-    // A device tagged `unmanaged` has no management plane to probe (an unmanaged
-    // switch, a dumb PDU). It is not up/down in the monitored sense - it just
-    // exists. Marking it as such stops the live layer from ever calling it dead.
-    const unmanaged = (device.tags ?? []).some((tag) => tag.slug === "unmanaged");
+    // A device is "unmanaged" when it has no management plane to probe (an
+    // unmanaged switch, a dumb PDU). It is not up/down in the monitored sense -
+    // it just exists, so the live layer must never call it dead. Two signals
+    // mark it: an explicit `unmanaged` tag (the override), or the built-in
+    // `unmanaged-switch` role that the lab already uses for such gear.
+    const unmanaged =
+      (device.tags ?? []).some((tag) => tag.slug === "unmanaged") ||
+      device.role?.slug === "unmanaged-switch";
 
     nodes.push({
       identity: { id, key: `${assetType}:${slugify(name)}` },

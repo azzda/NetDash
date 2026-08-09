@@ -198,6 +198,27 @@ describe("mapDatasetToSnapshot", () => {
     expect(dgs108?.data.details?.extensions?.unmanaged).toBe(true);
   });
 
+  it("treats the unmanaged-switch role as unmanaged, without a tag", () => {
+    const data = dataset();
+    data.devices.push({
+      id: 10,
+      name: "xmg105hp",
+      display: "xmg105hp",
+      role: { id: 13, name: "Unmanaged Switch", slug: "unmanaged-switch" },
+      device_type: { id: 24, model: "XMG-105HP", manufacturer: { id: 32, name: "Zyxel" } },
+      site: { id: 1, name: "azzda HQ" },
+      rack: null,
+      tenant: null,
+      cluster: null,
+      status: { value: "active", label: "Active" },
+      primary_ip4: null,
+    });
+
+    const xmg = mapDatasetToSnapshot(data).nodes.find((n) => n.data.name === "xmg105hp");
+    expect(xmg?.data.status).toBe("unmanaged");
+    expect(xmg?.data.details?.extensions?.unmanaged).toBe(true);
+  });
+
   it("builds edges from cables, with endpoint detail on both sides", () => {
     const snapshot = mapDatasetToSnapshot(dataset());
     const edge = snapshot.edges.find((e) => e.id === "netbox:cable:900");

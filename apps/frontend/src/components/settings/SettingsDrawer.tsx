@@ -3,7 +3,6 @@ import { type ChangeEvent, useEffect, useState } from "react";
 import type {
   CurrencyPreference,
   CustomPalette,
-  DensityPreference,
   ThemePreference,
   UserProfile,
 } from "../../lib/uiPreferences";
@@ -12,7 +11,6 @@ import type { AuthState } from "../../services/authClient";
 interface SettingsDrawerProps {
   open: boolean;
   themePreference: ThemePreference;
-  densityPreference: DensityPreference;
   currencyPreference: CurrencyPreference;
   customPalette: CustomPalette;
   trafficMode: TrafficMode;
@@ -21,7 +19,6 @@ interface SettingsDrawerProps {
   authState: AuthState | null;
   onClose: () => void;
   onThemeChange: (value: ThemePreference) => void;
-  onDensityChange: (value: DensityPreference) => void;
   onCurrencyChange: (value: CurrencyPreference) => void;
   onCustomPaletteChange: (value: CustomPalette) => void;
   onTrafficModeChange: (value: TrafficMode) => void;
@@ -113,7 +110,6 @@ function AccountSection({
 export function SettingsDrawer({
   open,
   themePreference,
-  densityPreference,
   currencyPreference,
   customPalette,
   trafficMode,
@@ -122,7 +118,6 @@ export function SettingsDrawer({
   authState,
   onClose,
   onThemeChange,
-  onDensityChange,
   onCurrencyChange,
   onCustomPaletteChange,
   onTrafficModeChange,
@@ -142,10 +137,6 @@ export function SettingsDrawer({
 
   const handleTheme = (event: ChangeEvent<HTMLSelectElement>) => {
     onThemeChange(event.target.value as ThemePreference);
-  };
-
-  const handleDensity = (event: ChangeEvent<HTMLSelectElement>) => {
-    onDensityChange(event.target.value as DensityPreference);
   };
 
   const handleTrafficMode = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -258,17 +249,6 @@ export function SettingsDrawer({
               <option value="dark">Dark</option>
               <option value="light">Light</option>
               <option value="custom">Custom</option>
-            </select>
-          </label>
-          <label className="block text-xs font-medium text-dimmed">
-            Density
-            <select
-              value={densityPreference}
-              onChange={handleDensity}
-              className="input-control mt-1 w-full"
-            >
-              <option value="compact">Compact</option>
-              <option value="comfortable">Comfortable</option>
             </select>
           </label>
           <label className="block text-xs font-medium text-dimmed">

@@ -110,6 +110,9 @@ export function attachWebSocketServer(options: WebSocketServerOptions): WebSocke
     try {
       const next = await provider.getSnapshot();
       next.sequence = snapshot.sequence + 1;
+      // Stamp provenance so the UI can flag demo/mock data at a glance.
+      next.synthetic = provider.synthetic;
+      next.source = provider.name;
       snapshot = next;
 
       for (const node of snapshot.nodes) {

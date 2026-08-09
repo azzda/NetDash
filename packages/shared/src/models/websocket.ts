@@ -12,6 +12,10 @@ export interface GraphSnapshotPayload {
   edges: NetDashEdge[];
   sequence: number;
   ts: number;
+  /** True when the graph comes from a synthetic (demo/mock) provider. */
+  synthetic?: boolean;
+  /** Name of the provider that produced this snapshot (e.g. "mock", "netbox"). */
+  source?: string;
 }
 
 export interface NodeStatusUpdatePayload {

@@ -78,9 +78,9 @@ export default function App() {
   const [themePreference, setThemePreference] = useState<ThemePreference>(() =>
     readStoredPreference(storageKeys.theme, "dark"),
   );
-  const [densityPreference, setDensityPreference] = useState<DensityPreference>(() =>
-    readStoredPreference(storageKeys.density, "compact"),
-  );
+  // Density is fixed to compact now that the Settings toggle is gone; kept as a
+  // value so the components that lay out around it need no changes.
+  const densityPreference: DensityPreference = "compact";
   const [currencyPreference, setCurrencyPreference] = useState<CurrencyPreference>(() =>
     readStoredPreference(storageKeys.currency, "eur"),
   );
@@ -110,6 +110,8 @@ export default function App() {
     edges,
     selectedNodeId,
     selectedEdgeId,
+    synthetic,
+    source,
     setSelectedNode,
     setSelectedEdge,
     clearSelection,
@@ -223,10 +225,6 @@ export default function App() {
     window.addEventListener("pointerdown", handlePointerDown);
     return () => window.removeEventListener("pointerdown", handlePointerDown);
   }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem(storageKeys.density, densityPreference);
-  }, [densityPreference]);
 
   useEffect(() => {
     window.localStorage.setItem(storageKeys.currency, currencyPreference);
@@ -436,6 +434,14 @@ export default function App() {
                 }`}
               />
             </button>
+            {synthetic ? (
+              <span
+                title={`This is demo data from the "${source ?? "mock"}" provider — not your real infrastructure.`}
+                className="shrink-0 rounded-md border border-amber-400/50 bg-amber-400/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-amber-300"
+              >
+                Demo data
+              </span>
+            ) : null}
           </div>
 
           <div className="hidden min-w-0 items-center justify-end gap-2 lg:flex">
@@ -628,7 +634,7 @@ export default function App() {
                 <div className="min-w-0 flex-1 space-y-3">
                   <div
                     className="min-w-0 flex-1 transition-[height] duration-300 ease-in-out"
-                    style={{ height: graphCompact ? 140 : 560 }}
+                    style={{ height: graphCompact ? 140 : "72vh" }}
                   >
                     <NetDashCanvas
                       nodes={nodes}
@@ -636,7 +642,6 @@ export default function App() {
                       selectedNodeId={selectedNodeId}
                       selectedEdgeId={selectedEdgeId}
                       trafficMode={trafficMode}
-                      onTrafficModeChange={setTrafficMode}
                       layerView={layerView}
                       onLayerViewChange={setLayerView}
                       densityPreference={densityPreference}
@@ -708,7 +713,6 @@ export default function App() {
       <SettingsDrawer
         open={settingsOpen}
         themePreference={themePreference}
-        densityPreference={densityPreference}
         currencyPreference={currencyPreference}
         customPalette={customPalette}
         trafficMode={trafficMode}
@@ -717,7 +721,6 @@ export default function App() {
         authState={authState}
         onClose={() => setSettingsOpen(false)}
         onThemeChange={setThemePreference}
-        onDensityChange={setDensityPreference}
         onCurrencyChange={setCurrencyPreference}
         onCustomPaletteChange={setCustomPalette}
         onTrafficModeChange={setTrafficMode}

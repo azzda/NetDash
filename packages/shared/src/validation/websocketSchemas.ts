@@ -115,6 +115,8 @@ export const graphSnapshotMessageSchema = baseEnvelopeSchema.extend({
     edges: z.array(edgeSchema),
     sequence: z.number().int().nonnegative(),
     ts: z.number(),
+    synthetic: z.boolean().optional(),
+    source: z.string().optional(),
   }),
 });
 

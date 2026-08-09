@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import dagre from "dagre";
 import ReactFlow, {
   Background,
@@ -45,18 +45,11 @@ function edgeVisibleInLayer(edge: NetDashEdge, view: LayerView): boolean {
 }
 
 interface GraphToolbarProps {
-  trafficMode: TrafficMode;
-  onTrafficModeChange: (mode: TrafficMode) => void;
   layerView: LayerView;
   onLayerViewChange: (view: LayerView) => void;
 }
 
-function GraphToolbar({
-  trafficMode,
-  onTrafficModeChange,
-  layerView,
-  onLayerViewChange,
-}: GraphToolbarProps) {
+function GraphToolbar({ layerView, onLayerViewChange }: GraphToolbarProps) {
   const reactFlow = useReactFlow();
 
   return (
@@ -111,80 +104,9 @@ function GraphToolbar({
             </button>
           ))}
         </div>
-
-        <span className="graph-toolbar__divider" />
-
-        <div className="flex items-center gap-1">
-          {trafficModes.map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => onTrafficModeChange(mode)}
-              className="graph-toolbar__button capitalize"
-              data-active={trafficMode === mode}
-            >
-              {mode === "bidirectional" ? "Bidirectional" : mode}
-            </button>
-          ))}
-        </div>
       </div>
     </Panel>
   );
-}
-
-interface SelectionFocusSyncProps {
-  nodes: Node<NetDashNodeData>[];
-  edges: Edge[];
-  selectedNodeId?: string;
-  selectedEdgeId?: string;
-}
-
-function SelectionFocusSync({
-  nodes,
-  edges,
-  selectedNodeId,
-  selectedEdgeId,
-}: SelectionFocusSyncProps) {
-  const reactFlow = useReactFlow();
-
-  useEffect(() => {
-    if (selectedNodeId) {
-      const targetNode = nodes.find((node) => node.id === selectedNodeId);
-      if (!targetNode) {
-        return;
-      }
-
-      void reactFlow.setCenter(targetNode.position.x + 120, targetNode.position.y + 60, {
-        duration: 220,
-        zoom: Math.max(reactFlow.getZoom(), 0.95),
-      });
-      return;
-    }
-
-    if (selectedEdgeId) {
-      const targetEdge = edges.find((edge) => edge.id === selectedEdgeId);
-      if (!targetEdge) {
-        return;
-      }
-
-      const source = nodes.find((node) => node.id === targetEdge.source);
-      const target = nodes.find((node) => node.id === targetEdge.target);
-      if (!source || !target) {
-        return;
-      }
-
-      const bounds = {
-        x: Math.min(source.position.x, target.position.x),
-        y: Math.min(source.position.y, target.position.y),
-        width: Math.abs(source.position.x - target.position.x) + 240,
-        height: Math.abs(source.position.y - target.position.y) + 120,
-      };
-
-      void reactFlow.fitBounds(bounds, { duration: 240, padding: 0.3 });
-    }
-  }, [edges, nodes, reactFlow, selectedEdgeId, selectedNodeId]);
-
-  return null;
 }
 
 // Uniform node footprint so dagre's spacing matches what is actually drawn.
@@ -209,8 +131,11 @@ function computeLayout(
   g.setDefaultEdgeLabel(() => ({}));
   g.setGraph({
     rankdir: "LR",
-    nodesep: 48,
-    ranksep: 160,
+    // Bigger nodesep spreads siblings vertically (they share a rank in LR),
+    // using the taller canvas instead of squishing everything into one band.
+    // Slightly smaller ranksep pulls the columns in so wide setups fit better.
+    nodesep: 80,
+    ranksep: 140,
     edgesep: 24,
     marginx: 32,
     marginy: 32,
@@ -249,7 +174,6 @@ interface NetDashCanvasProps {
   selectedNodeId?: string;
   selectedEdgeId?: string;
   trafficMode: TrafficMode;
-  onTrafficModeChange: (mode: TrafficMode) => void;
   layerView: LayerView;
   onLayerViewChange: (view: LayerView) => void;
   densityPreference: "compact" | "comfortable";
@@ -259,15 +183,12 @@ interface NetDashCanvasProps {
   onPaneClick: () => void;
 }
 
-const trafficModes: TrafficMode[] = ["off", "combined", "bidirectional"];
-
 export function NetDashCanvas({
   nodes,
   edges,
   selectedNodeId,
   selectedEdgeId,
   trafficMode,
-  onTrafficModeChange,
   layerView,
   onLayerViewChange,
   densityPreference,
@@ -380,18 +301,7 @@ export function NetDashCanvas({
           size={1}
           color={effectiveTheme === "dark" ? "#25314a" : "#cbd5e1"}
         />
-        <SelectionFocusSync
-          nodes={dagNodes}
-          edges={flowEdges}
-          selectedNodeId={selectedNodeId}
-          selectedEdgeId={selectedEdgeId}
-        />
-        <GraphToolbar
-          trafficMode={trafficMode}
-          onTrafficModeChange={onTrafficModeChange}
-          layerView={layerView}
-          onLayerViewChange={onLayerViewChange}
-        />
+        <GraphToolbar layerView={layerView} onLayerViewChange={onLayerViewChange} />
       </ReactFlow>
     </div>
   );
